@@ -14,6 +14,11 @@ const openapiSpec = {
     { name: 'WhatsApp', description: 'Status koneksi & kontrol sesi WhatsApp' },
     { name: 'Stock', description: 'Kelola data stock barang' },
   ],
+  // Semua endpoint wajib login -- klik tombol "Authorize" di kanan atas dan
+  // tempel access token sesi Supabase Auth (bisa diambil dari dashboard yang
+  // sedang login lewat DevTools > Application > Local Storage, key yang
+  // isinya "access_token", atau dari `supabase.auth.getSession()` di console).
+  security: [{ bearerAuth: [] }],
   paths: {
     '/api/wa/status': {
       get: {
@@ -172,6 +177,14 @@ const openapiSpec = {
     },
   },
   components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Access token sesi Supabase Auth (dari printflow-auth/printflow-dashboard yang sedang login).',
+      },
+    },
     schemas: {
       Barang: {
         type: 'object',

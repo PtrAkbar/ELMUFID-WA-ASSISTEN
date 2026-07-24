@@ -1,7 +1,10 @@
 const express = require('express');
 const stockController = require('../controllers/stockController');
+const { requireAuth } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
+
+router.use(requireAuth);
 
 router.get('/', stockController.ambilSemua);
 router.post('/', stockController.tambah);

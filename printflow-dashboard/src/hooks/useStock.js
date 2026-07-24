@@ -1,17 +1,24 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../config/api";
+import { useAuth } from "../context/AuthContext";
 
 export function useStock() {
+  const { session } = useAuth();
   const [stockItems, setStockItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  function authHeaders(extra) {
+    return { Authorization: `Bearer ${session?.access_token}`, ...extra };
+  }
+
   useEffect(() => {
     ambilStock();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.access_token]);
 
   async function ambilStock() {
     setLoading(true);
-    const res = await fetch(`${API_BASE_URL}/api/stock`);
+    const res = await fetch(`${API_BASE_URL}/api/stock`, { headers: authHeaders() });
     const data = await res.json();
     setStockItems(Array.isArray(data) ? data : []);
     setLoading(false);
@@ -21,7 +28,7 @@ export function useStock() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/stock`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ nama, harga }),
       });
       const data = await res.json().catch(() => null);
@@ -41,7 +48,7 @@ export function useStock() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/stock/${kode}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error("gagal");
@@ -58,7 +65,7 @@ export function useStock() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/stock/${kode}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ harga }),
       });
       if (!res.ok) throw new Error("gagal");
@@ -73,7 +80,7 @@ export function useStock() {
     const sebelum = stockItems;
     setStockItems((prev) => prev.filter((s) => s.kode !== kode));
     try {
-      const res = await fetch(`${API_BASE_URL}/api/stock/${kode}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE_URL}/api/stock/${kode}`, { method: "DELETE", headers: authHeaders() });
       if (!res.ok) throw new Error("gagal");
       return { error: null };
     } catch {
@@ -86,7 +93,7 @@ export function useStock() {
     const sebelum = stockItems;
     setStockItems([]);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/stock`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE_URL}/api/stock`, { method: "DELETE", headers: authHeaders() });
       if (!res.ok) throw new Error("gagal");
       return { error: null };
     } catch {
@@ -99,7 +106,7 @@ export function useStock() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/stock/bulk`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ barang: daftar }),
       });
       const data = await res.json().catch(() => null);
