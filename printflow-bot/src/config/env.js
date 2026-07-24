@@ -9,8 +9,6 @@ const env = {
   sessionFolder: process.env.SESSION_FOLDER || './session',
   phoneNumber: process.env.WA_PHONE_NUMBER || '',
   apiPort: Number(process.env.API_PORT) || 3001,
-  stockSheetId: process.env.STOCK_SHEET_ID || '',
-  googleCredentialsPath: process.env.GOOGLE_CREDENTIALS_PATH || './credentials/google-service-account.json',
   supabaseUrl: process.env.SUPABASE_URL || '',
   // Service role key (BUKAN anon key) -- dipakai backend untuk menulis order
   // baru dan mendengarkan perubahan status order, tanpa terikat RLS
