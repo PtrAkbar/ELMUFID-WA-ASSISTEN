@@ -65,7 +65,11 @@
       "Bash(robocopy \"e:/BOT WA ELMUFID/wa-bot-percetakan\" \"e:/BOT WA ELMUFID/printflow-bot\" /E /MOVE /R:1 /W:1 /NFL /NDL /NP)",
       "Bash(git rm *)",
       "Bash(timeout 30 node -e ' *)",
-      "Bash(timeout 40 node -e ' *)"
+      "Bash(timeout 40 node -e ' *)",
+      "Bash(node --check src/app.js)",
+      "Bash(node --check src/docs/openapiSpec.js)",
+      "Bash(curl -s -o /dev/null -w \"http_code=%{http_code}\\\\n\" http://localhost:3099/api-docs/)",
+      "Bash(curl -s http://localhost:3099/api/stock)"
     ],
     "additionalDirectories": [
       "e:\\BOT WA ELMUFID\\wa-bot-percetakan\\session"

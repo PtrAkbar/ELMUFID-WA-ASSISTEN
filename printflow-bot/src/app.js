@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const openapiSpec = require('./docs/openapiSpec');
 const stockRoutes = require('./routes/stockRoutes');
 const waRoutes = require('./routes/waRoutes');
 
@@ -24,6 +26,7 @@ function createServer() {
   );
   app.use(express.json());
 
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
   app.use('/api/wa', waRoutes);
   app.use('/api/stock', stockRoutes);
 
