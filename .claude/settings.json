@@ -62,7 +62,10 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git mv *)",
-      "Bash(robocopy \"e:/BOT WA ELMUFID/wa-bot-percetakan\" \"e:/BOT WA ELMUFID/printflow-bot\" /E /MOVE /R:1 /W:1 /NFL /NDL /NP)"
+      "Bash(robocopy \"e:/BOT WA ELMUFID/wa-bot-percetakan\" \"e:/BOT WA ELMUFID/printflow-bot\" /E /MOVE /R:1 /W:1 /NFL /NDL /NP)",
+      "Bash(git rm *)",
+      "Bash(timeout 30 node -e ' *)",
+      "Bash(timeout 40 node -e ' *)"
     ],
     "additionalDirectories": [
       "e:\\BOT WA ELMUFID\\wa-bot-percetakan\\session"

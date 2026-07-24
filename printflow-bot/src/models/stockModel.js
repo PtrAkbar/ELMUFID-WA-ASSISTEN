@@ -57,9 +57,22 @@ function rowToItem(row) {
   };
 }
 
+// Di-cache singkat (bukan dipanggil ulang ke Google Sheets tiap kali) --
+// dalam satu obrolan, getAllStock() bisa kepanggil 2-3 kali per pesan
+// (analisis pesan, cocokin ukuran kertas file, dst), dan tiap panggilan ke
+// Sheets API itu jauh lebih lambat daripada baca dari memory. 20 detik masih
+// cukup cepat buat perubahan stock dari dashboard kerasa "langsung".
+const CACHE_MS = 20 * 1000;
+let cache = null;
+let cacheAt = 0;
+
 async function getAllStock() {
+  const sekarang = Date.now();
+  if (cache && sekarang - cacheAt < CACHE_MS) return cache;
   const rows = await getAllRows();
-  return rows.slice(1).map(rowToItem);
+  cache = rows.slice(1).map(rowToItem);
+  cacheAt = Date.now();
+  return cache;
 }
 
 // Baris baru kadang ikut mewarisi format header (latar ungu + teks putih) dari

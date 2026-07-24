@@ -6,7 +6,7 @@
 // Cache di memory dipakai supaya pengecekan tiap pesan tidak perlu roundtrip
 // ke database.
 
-const supabaseService = require('./supabaseService');
+const contactModel = require('../models/contactModel');
 
 const kontakDiketahui = new Set();
 let sudahDimuat = false;
@@ -16,7 +16,7 @@ function nomorDariJid(jid) {
 }
 
 async function muatSemuaKontak() {
-  const daftar = await supabaseService.ambilSemuaKontakPernahChat();
+  const daftar = await contactModel.ambilSemuaKontakPernahChat();
   for (const nomor of daftar) kontakDiketahui.add(nomor);
   sudahDimuat = true;
   console.log(`[FirstContact] ${kontakDiketahui.size} kontak dimuat dari database.`);
@@ -29,7 +29,7 @@ async function catatKontakMasuk(jid) {
   if (kontakDiketahui.has(nomor)) return;
   kontakDiketahui.add(nomor);
   try {
-    await supabaseService.catatKontakPernahChat(nomor);
+    await contactModel.catatKontakPernahChat(nomor);
   } catch (error) {
     console.error('[FirstContact] Gagal simpan kontak baru:', error.message);
   }

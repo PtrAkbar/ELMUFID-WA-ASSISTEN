@@ -1,8 +1,9 @@
 const { analyzeMessage, susunBalasanAlami } = require('../services/groqService');
 const { checkStock, calculateOrder } = require('../services/pricingService');
-const { getAllStock } = require('../data/stock');
+const { getAllStock } = require('../models/stockModel');
 const { ambilRiwayat, tambahPesan, resetRiwayat } = require('../services/conversationStore');
-const supabaseService = require('../services/supabaseService');
+const orderModel = require('../models/orderModel');
+const paymentConfigModel = require('../models/paymentConfigModel');
 const paymentFlow = require('../services/paymentFlow');
 const adminMode = require('../services/adminMode');
 const filePrintFlow = require('../services/filePrintFlow');
@@ -123,7 +124,7 @@ async function simpanOrder({ barangValid, jasaTambahanList, nomorUntukOrder, nam
   const { order, detail } = hitungDetailOrder(barangValid, jasaTambahanList);
 
   if (orderAktifId) {
-    const order_ = await supabaseService.tambahKeOrderAktif(orderAktifId, {
+    const order_ = await orderModel.tambahKeOrderAktif(orderAktifId, {
       detailTambahan: detail,
       totalTambahan: order.total,
       status,
@@ -131,7 +132,7 @@ async function simpanOrder({ barangValid, jasaTambahanList, nomorUntukOrder, nam
     return { order, detail, orderTersimpan: order_ };
   }
 
-  const order_ = await supabaseService.buatOrder({
+  const order_ = await orderModel.buatOrder({
     namaCustomer: namaCustomer || 'Customer WA',
     nomorWaJid: nomorUntukOrder,
     detail,
@@ -147,7 +148,7 @@ async function simpanOrder({ barangValid, jasaTambahanList, nomorUntukOrder, nam
 // gak perlu nunggu bukti apa-apa). Kalau ada QRIS/rekening, order BELUM
 // disimpan dulu -- tunggu customer pilih metode dulu (lihat lanjutkanPembayaran).
 async function mulaiAtauLanjutkanOrder(customerMessage, kelengkapan, analysis, nomor, nomorUntukOrder, namaPengirim, riwayat) {
-  const orderAktif = await supabaseService.ambilOrderAktifTerbaru(nomorUntukOrder).catch(() => null);
+  const orderAktif = await orderModel.ambilOrderAktifTerbaru(nomorUntukOrder).catch(() => null);
   const config = await paymentFlow.konfigPembayaran();
 
   if (!config.adaQris && !config.adaRekening) {
@@ -260,7 +261,7 @@ async function lanjutkanPembayaran(customerMessage, tunggu, metode, nomor, nomor
   }
 
   if (metode === 'qris') {
-    const qris = await supabaseService.ambilQrisConfig();
+    const qris = await paymentConfigModel.ambilQrisConfig();
     const text = await susunBalasanAlami(
       customerMessage,
       { situasi: 'kirim_info_qris', rincianText: detail, total: order.total },
@@ -270,7 +271,7 @@ async function lanjutkanPembayaran(customerMessage, tunggu, metode, nomor, nomor
   }
 
   // transfer
-  const daftarRekening = await supabaseService.ambilDaftarRekening();
+  const daftarRekening = await paymentConfigModel.ambilDaftarRekening();
   const text = await susunBalasanAlami(
     customerMessage,
     {
@@ -289,7 +290,7 @@ async function lanjutkanPembayaran(customerMessage, tunggu, metode, nomor, nomor
 // singkat per nomor disimpan lewat conversationStore supaya AI "ingat"
 // konteks lanjutan. Status pembayaran/order yang sudah final disimpan di
 // database (bukan cuma riwayat obrolan yang bisa direset) supaya tahan bot
-// restart -- lihat paymentFlow.js & supabaseService.js.
+// restart -- lihat paymentFlow.js & models/orderModel.js.
 async function handleIncomingMessage(customerMessage, nomor = 'unknown', namaPengirim = null, nomorUntukOrder = nomor, adaGambar = false, infoFile = null) {
   const riwayat = ambilRiwayat(nomor);
 
@@ -306,13 +307,13 @@ async function handleIncomingMessage(customerMessage, nomor = 'unknown', namaPen
     return { text: balasan };
   }
 
-  const orderAktif = await supabaseService.ambilOrderAktifTerbaru(nomorUntukOrder).catch(() => null);
+  const orderAktif = await orderModel.ambilOrderAktifTerbaru(nomorUntukOrder).catch(() => null);
 
   // 1. Gambar masuk & ada order yang lagi nunggu bukti bayar -- langsung
   //    dianggap bukti (gak wajib ada kata "sudah" segala, gambar aja cukup).
   if (adaGambar && orderAktif?.status === 'menunggu_bayar') {
     paymentFlow.batalkanTimerReminder(nomor);
-    await supabaseService.updateStatusOrder(orderAktif.id, 'belum');
+    await orderModel.updateStatusOrder(orderAktif.id, 'belum');
     const balasan = await susunBalasanAlami(
       customerMessage || '(kirim gambar)',
       { situasi: 'bukti_pembayaran_diterima' },

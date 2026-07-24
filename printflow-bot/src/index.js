@@ -1,8 +1,8 @@
 const { startWhatsAppBot } = require('./services/whatsappService');
-const { createServer } = require('./server');
+const { createServer } = require('./app');
 const env = require('./config/env');
 
-console.log('Memulai WA Bot Percetakan...');
+console.log('Memulai PrintFlow Bot...');
 
 const app = createServer();
 app.listen(env.apiPort, () => {

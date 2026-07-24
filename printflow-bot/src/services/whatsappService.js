@@ -10,10 +10,10 @@ const { Boom } = require('@hapi/boom');
 const pino = require('pino');
 const QRCode = require('qrcode');
 const fs = require('fs/promises');
-const { handleIncomingMessage } = require('../handlers/messageHandler');
+const { handleIncomingMessage } = require('../controllers/messageController');
 const env = require('../config/env');
 const waState = require('./waState');
-const supabaseService = require('./supabaseService');
+const orderModel = require('../models/orderModel');
 const { simulasikanBalasanNatural } = require('./naturalDelay');
 const { antrikanPengiriman } = require('./messageQueue');
 const firstContactGuard = require('./firstContactGuard');
@@ -299,7 +299,7 @@ async function startWhatsAppBot() {
           return null;
         });
       } else if (adaGambar) {
-        const orderMenungguBayar = await supabaseService
+        const orderMenungguBayar = await orderModel
           .ambilOrderAktifTerbaru(nomorUntukOrder)
           .then((o) => o?.status === 'menunggu_bayar')
           .catch(() => false);
@@ -399,7 +399,7 @@ async function tanganiNotifikasiStatus(jid, statusBaru, order) {
 // reconnect WA, karena langganan realtime Supabase independen dari koneksi
 // WhatsApp. kirimPesanKe() sendiri yang mengecek currentSock saat notifikasi
 // benar-benar perlu dikirim.
-supabaseService.dengarkanPerubahanStatus(tanganiNotifikasiStatus);
+orderModel.dengarkanPerubahanStatus(tanganiNotifikasiStatus);
 
 // Memutuskan sesi WhatsApp yang aktif, menghapus sesi tersimpan, lalu memulai
 // ulang agar dashboard menerima QR baru untuk menyambungkan nomor lain.

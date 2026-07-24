@@ -1,35 +1,11 @@
-const { createClient } = require('@supabase/supabase-js');
-const env = require('../config/env');
-
-// Dipakai backend bot untuk menulis order baru (hasil konfirmasi chat WA) dan
-// mendengarkan perubahan status order (diubah admin lewat dashboard) supaya
-// bisa kirim notifikasi balik ke customer. Pakai service role key -- bypass
-// RLS "to authenticated" karena bot bukan user yang login, tapi proses
-// backend tepercaya.
-const client =
-  env.supabaseUrl && env.supabaseServiceRoleKey
-    ? createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
-        auth: { persistSession: false },
-      })
-    : null;
-
-function tersedia() {
-  return Boolean(client);
-}
-
-function jidKeNomor(jid) {
-  // JID bisa berbentuk "628xxx@s.whatsapp.net" atau "628xxx:0@s.whatsapp.net"
-  // (angka setelah ":" itu device id, bukan bagian nomor telepon) -- keduanya
-  // harus dibuang supaya nomor_wa yang tersimpan valid dipakai link wa.me.
-  return String(jid || '').split('@')[0].split(':')[0];
-}
+const { client, jidKeNomor } = require('./supabaseClient');
 
 // Menyimpan order baru ke tabel orders. status default "menunggu_bayar" kalau
 // order ini masih perlu konfirmasi metode pembayaran dulu -- kalau toko gak
 // setting metode pembayaran apapun (cash-only), pemanggil boleh langsung
 // pakai status "belum" (belum diproses, langsung masuk antrian admin).
 // Melempar error kalau Supabase belum dikonfigurasi atau insert gagal --
-// pemanggil (messageHandler) yang urus balasan ke customer kalau ini gagal.
+// pemanggil (messageController) yang urus balasan ke customer kalau ini gagal.
 async function buatOrder({ namaCustomer, nomorWaJid, detail, total, status = 'menunggu_bayar' }) {
   if (!client) {
     throw new Error('Supabase belum dikonfigurasi di backend bot');
@@ -100,45 +76,12 @@ async function updateStatusOrder(orderId, status) {
   if (error) throw error;
 }
 
-// Konfigurasi QRIS toko (cuma 1 baris). null kalau belum diisi admin.
-async function ambilQrisConfig() {
-  if (!client) return null;
-  const { data, error } = await client.from('qris_config').select('gambar_url').eq('id', 1).maybeSingle();
-  if (error) throw error;
-  return data?.gambar_url ? data : null;
-}
-
-// Daftar rekening bank toko, urut dari yang paling baru ditambahkan.
-async function ambilDaftarRekening() {
-  if (!client) return [];
-  const { data, error } = await client.from('rekening_config').select('*').order('created_at', { ascending: false });
-  if (error) throw error;
-  return data || [];
-}
-
-// Semua nomor yang pernah mengirim pesan ke bot -- dimuat sekali saat bot
-// start buat mengisi cache firstContactGuard.
-async function ambilSemuaKontakPernahChat() {
-  if (!client) return [];
-  const { data, error } = await client.from('kontak_pernah_chat').select('nomor');
-  if (error) throw error;
-  return (data || []).map((row) => row.nomor);
-}
-
-// Mencatat nomor baru yang pertama kali chat ke bot. upsert supaya aman
-// dipanggil berkali-kali tanpa perlu cek "sudah ada belum" dulu.
-async function catatKontakPernahChat(nomor) {
-  if (!client) return;
-  const { error } = await client.from('kontak_pernah_chat').upsert({ nomor }, { onConflict: 'nomor' });
-  if (error) throw error;
-}
-
 // Mendengarkan perubahan status order (diubah admin lewat dashboard) secara
 // realtime, lalu panggil kirimNotifikasi(nomorWaJid, statusBaru, order) kalau
 // statusnya benar-benar berubah (bukan update lain seperti ganti harga).
 function dengarkanPerubahanStatus(kirimNotifikasi) {
   if (!client) {
-    console.warn('[Supabase] Belum dikonfigurasi, notifikasi status order dinonaktifkan.');
+    console.warn('[OrderModel] Supabase belum dikonfigurasi, notifikasi status order dinonaktifkan.');
     return;
   }
 
@@ -155,26 +98,15 @@ function dengarkanPerubahanStatus(kirimNotifikasi) {
 
         const jid = `${payload.new.nomor_wa}@s.whatsapp.net`;
         kirimNotifikasi(jid, statusBaru, payload.new).catch((error) => {
-          console.error('[Supabase] Gagal kirim notifikasi status order:', error.message);
+          console.error('[OrderModel] Gagal kirim notifikasi status order:', error.message);
         });
       }
     )
     .subscribe((status) => {
       if (status === 'SUBSCRIBED') {
-        console.log('[Supabase] Mendengarkan perubahan status order untuk notifikasi WA.');
+        console.log('[OrderModel] Mendengarkan perubahan status order untuk notifikasi WA.');
       }
     });
 }
 
-module.exports = {
-  tersedia,
-  buatOrder,
-  ambilOrderAktifTerbaru,
-  tambahKeOrderAktif,
-  updateStatusOrder,
-  ambilQrisConfig,
-  ambilDaftarRekening,
-  ambilSemuaKontakPernahChat,
-  catatKontakPernahChat,
-  dengarkanPerubahanStatus,
-};
+module.exports = { buatOrder, ambilOrderAktifTerbaru, tambahKeOrderAktif, updateStatusOrder, dengarkanPerubahanStatus };

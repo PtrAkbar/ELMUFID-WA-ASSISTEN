@@ -1,10 +1,10 @@
 // Mengelola alur pembayaran: nanya metode pembayaran, deteksi jawaban
 // customer, dan reminder kirim bukti. Status order yang sudah final (sudah
-// bayar/belum) disimpan di database lewat supabaseService -- state di sini
-// cuma buat obrolan yang MASIH berjalan (belum final), jadi wajar kalau
+// bayar/belum) disimpan di database lewat models/orderModel.js -- state di
+// sini cuma buat obrolan yang MASIH berjalan (belum final), jadi wajar kalau
 // hilang kalau bot restart di tengah obrolan.
 
-const supabaseService = require('./supabaseService');
+const paymentConfigModel = require('../models/paymentConfigModel');
 
 const JEDA_REMINDER_MS = 3 * 60 * 1000; // 3 menit
 
@@ -22,8 +22,8 @@ const FRASA_KLAIM_SUDAH_BAYAR = [
 
 async function konfigPembayaran() {
   const [qris, rekening] = await Promise.all([
-    supabaseService.ambilQrisConfig(),
-    supabaseService.ambilDaftarRekening(),
+    paymentConfigModel.ambilQrisConfig(),
+    paymentConfigModel.ambilDaftarRekening(),
   ]);
   return { qris, daftarRekening: rekening, adaQris: Boolean(qris), adaRekening: rekening.length > 0 };
 }

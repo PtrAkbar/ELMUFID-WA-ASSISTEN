@@ -1,4 +1,4 @@
-const { findJasaTambahan } = require('../data/pricelist');
+const { findJasaTambahan } = require('../models/pricelistModel');
 
 // Mengecek ketersediaan stock untuk satu produk. Pencocokan nama (typo/istilah
 // beda) sudah dikerjakan AI lewat produkCocok; di sini murni pencarian persis
