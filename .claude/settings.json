@@ -59,7 +59,10 @@
       "Bash(node --check src/data/stock.js)",
       "Bash(node -e \"console.log\\('fetch available:', typeof fetch\\)\")",
       "Bash(git init *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git mv *)",
+      "Bash(robocopy \"e:/BOT WA ELMUFID/wa-bot-percetakan\" \"e:/BOT WA ELMUFID/printflow-bot\" /E /MOVE /R:1 /W:1 /NFL /NDL /NP)"
     ],
     "additionalDirectories": [
       "e:\\BOT WA ELMUFID\\wa-bot-percetakan\\session"

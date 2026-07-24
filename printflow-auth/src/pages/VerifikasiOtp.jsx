@@ -16,7 +16,7 @@ export default function VerifikasiOtp() {
           <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: warna.biru }}>
             <Zap size={18} className="text-white" fill="white" />
           </div>
-          <span style={{ fontWeight: 700, fontSize: 16, color: warna.teksUtama }}>Percetakan</span>
+          <span style={{ fontWeight: 700, fontSize: 16, color: warna.teksUtama }}>PrintFlow</span>
         </div>
 
         <h1 style={{ fontSize: 22, fontWeight: 700, color: warna.teksUtama }}>Verifikasi email</h1>

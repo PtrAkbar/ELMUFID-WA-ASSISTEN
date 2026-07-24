@@ -1,7 +1,7 @@
 {
-  "name": "wa-bot-percetakan",
+  "name": "printflow-bot",
   "version": "1.0.0",
-  "description": "Bot WhatsApp untuk layanan percetakan menggunakan Baileys dan Groq API",
+  "description": "Bot WhatsApp PrintFlow -- otomatisasi order & pembayaran percetakan menggunakan Baileys dan Groq API",
   "main": "src/index.js",
   "type": "commonjs",
   "scripts": {
