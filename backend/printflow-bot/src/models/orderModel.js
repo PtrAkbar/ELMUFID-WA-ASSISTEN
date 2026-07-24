@@ -76,6 +76,41 @@ async function updateStatusOrder(orderId, status) {
   if (error) throw error;
 }
 
+// Semua order, urut terbaru dulu -- dipakai dashboard buat nampilin daftar
+// order lengkap (bukan cuma satu nomor kayak ambilOrderAktifTerbaru).
+async function ambilSemuaOrder() {
+  if (!client) return [];
+  const { data, error } = await client.from('orders').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+// Order dibuat manual oleh admin lewat dashboard (bukan hasil chat WA) --
+// beda dari buatOrder() di atas karena status selalu langsung "belum"
+// (gak lewat alur menunggu_bayar) dan gak butuh flow konfirmasi pembayaran.
+async function buatOrderManual({ nama, nomor, detail, total }) {
+  if (!client) throw new Error('Supabase belum dikonfigurasi di backend bot');
+  const { data, error } = await client
+    .from('orders')
+    .insert({ nama_customer: nama, nomor_wa: jidKeNomor(nomor), detail, total, status: 'belum' })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function hapusSemuaOrderAktif() {
+  if (!client) throw new Error('Supabase belum dikonfigurasi di backend bot');
+  const { error } = await client.from('orders').delete().neq('status', 'selesai');
+  if (error) throw error;
+}
+
+async function hapusSemuaRiwayat() {
+  if (!client) throw new Error('Supabase belum dikonfigurasi di backend bot');
+  const { error } = await client.from('orders').delete().eq('status', 'selesai');
+  if (error) throw error;
+}
+
 // Mendengarkan perubahan status order (diubah admin lewat dashboard) secara
 // realtime, lalu panggil kirimNotifikasi(nomorWaJid, statusBaru, order) kalau
 // statusnya benar-benar berubah (bukan update lain seperti ganti harga).
@@ -109,4 +144,14 @@ function dengarkanPerubahanStatus(kirimNotifikasi) {
     });
 }
 
-module.exports = { buatOrder, ambilOrderAktifTerbaru, tambahKeOrderAktif, updateStatusOrder, dengarkanPerubahanStatus };
+module.exports = {
+  buatOrder,
+  ambilOrderAktifTerbaru,
+  tambahKeOrderAktif,
+  updateStatusOrder,
+  dengarkanPerubahanStatus,
+  ambilSemuaOrder,
+  buatOrderManual,
+  hapusSemuaOrderAktif,
+  hapusSemuaRiwayat,
+};

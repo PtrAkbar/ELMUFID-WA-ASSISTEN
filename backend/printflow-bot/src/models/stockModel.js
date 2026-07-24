@@ -19,7 +19,9 @@ function rowToItem(row) {
   };
 }
 
-
+// Cache singkat -- Supabase jauh lebih cepat dari Sheets, tapi tetap dijaga
+// biar getAllStock() yang kepanggil 2-3x per pesan (analisis pesan, cocokin
+// ukuran kertas file, dst) gak perlu roundtrip database berulang-ulang.
 const CACHE_MS = 20 * 1000;
 let cache = null;
 let cacheAt = 0;

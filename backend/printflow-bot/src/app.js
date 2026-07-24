@@ -4,6 +4,8 @@ const swaggerUi = require('swagger-ui-express');
 const openapiSpec = require('./docs/openapiSpec');
 const stockRoutes = require('./routes/stockRoutes');
 const waRoutes = require('./routes/waRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const kustomisasiRoutes = require('./routes/kustomisasiRoutes');
 
 // Vite otomatis pindah ke port lain (5174, 5175, dst) kalau port defaultnya
 // sudah dipakai, jadi origin dashboard tidak selalu sama persis tiap kali
@@ -29,6 +31,8 @@ function createServer() {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
   app.use('/api/wa', waRoutes);
   app.use('/api/stock', stockRoutes);
+  app.use('/api/orders', orderRoutes);
+  app.use('/api/kustomisasi', kustomisasiRoutes);
 
   return app;
 }

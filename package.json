@@ -2,7 +2,7 @@
   "name": "printflow",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n bot,auth,ui -c green,yellow,cyan \"npm start --prefix printflow-bot\" \"npm run dev --prefix printflow-auth\" \"npm run dev --prefix printflow-dashboard\""
+    "dev": "concurrently -n bot,auth,ui -c green,yellow,cyan \"npm start --prefix backend/printflow-bot\" \"npm run dev --prefix frontend/printflow-auth\" \"npm run dev --prefix frontend/printflow-dashboard\""
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

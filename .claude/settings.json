@@ -69,7 +69,22 @@
       "Bash(node --check src/app.js)",
       "Bash(node --check src/docs/openapiSpec.js)",
       "Bash(curl -s -o /dev/null -w \"http_code=%{http_code}\\\\n\" http://localhost:3099/api-docs/)",
-      "Bash(curl -s http://localhost:3099/api/stock)"
+      "Bash(curl -s http://localhost:3099/api/stock)",
+      "Bash(node --check src/middlewares/authMiddleware.js)",
+      "Bash(node --check src/routes/stockRoutes.js)",
+      "Bash(node --check src/routes/waRoutes.js)",
+      "Bash(node test-auth-server.js)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3098/api/stock)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -H \"Authorization: Bearer garbage-token\" http://localhost:3098/api/stock)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3098/api-docs/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X POST http://localhost:3098/api/wa/logout)",
+      "Bash(npx vite *)",
+      "Bash(git commit -m ' *)",
+      "Bash(node -e \"const s = require\\('./src/docs/openapiSpec'\\); console.log\\('paths:', Object.keys\\(s.paths\\).length\\); console.log\\('schemas:', Object.keys\\(s.components.schemas\\)\\);\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3098/api/orders)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3098/api/orders/events)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X PATCH http://localhost:3098/api/orders/1/status)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X DELETE http://localhost:3098/api/orders/aktif)"
     ],
     "additionalDirectories": [
       "e:\\BOT WA ELMUFID\\wa-bot-percetakan\\session"
