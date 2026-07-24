@@ -1,0 +1,10 @@
+{
+  "name": "percetakan-semua",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n bot,auth,ui -c green,yellow,cyan \"npm start --prefix wa-bot-percetakan\" \"npm run dev --prefix percetakan-auth\" \"npm run dev --prefix percetakan-ui\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

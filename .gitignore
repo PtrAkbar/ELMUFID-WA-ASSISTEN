@@ -1,0 +1,14 @@
+node_modules/
+dist/
+dist-ssr/
+.env
+.env.local
+*.log
+session/
+credentials/
+*.log
+*.suo
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+el-mufid-base-*.json
