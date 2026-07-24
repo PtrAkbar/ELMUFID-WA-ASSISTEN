@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import SessionLoading from "../loading/SessionLoading";
+import SessionLoading from "../atoms/SessionLoading";
 
 const AuthContext = createContext(null);
 

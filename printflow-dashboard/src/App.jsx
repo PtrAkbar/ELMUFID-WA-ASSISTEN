@@ -1,13 +1,10 @@
 import { useEffect, useState } from "react";
-import { warna, gradien } from "./styles/theme";
 import { useAuth } from "./context/AuthContext";
 import { useOrders } from "./hooks/useOrders";
 import { useStock } from "./hooks/useStock";
 import { useKustomisasi } from "./hooks/useKustomisasi";
 import { parseFileStockExcel } from "./utils/importExcel";
-import Sidebar from "./components/Sidebar";
-import Topbar from "./components/Topbar";
-import Toast from "./components/Toast";
+import DashboardLayout from "./templates/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Order from "./pages/Order";
 import Stock from "./pages/Stock";
@@ -131,75 +128,72 @@ export default function App() {
   }
 
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif", color: warna.teksUtama, background: gradien.latar }} className="min-h-screen flex">
-      <Toast pesan={toastPesan} />
-      <Sidebar halaman={halaman} setHalaman={setHalaman} totalProses={totalProses} />
-
-      <main className="flex-1 p-6">
-        <Topbar
-          title={judulHalaman[halaman].title}
-          sub={judulHalaman[halaman].sub}
-          notifications={notifications}
-          email={user?.email}
-          onLogout={logout}
+    <DashboardLayout
+      halaman={halaman}
+      setHalaman={setHalaman}
+      totalProses={totalProses}
+      title={judulHalaman[halaman].title}
+      sub={judulHalaman[halaman].sub}
+      notifications={notifications}
+      email={user?.email}
+      onLogout={logout}
+      toastPesan={toastPesan}
+    >
+      {halaman === "dashboard" && (
+        <Dashboard
+          orders={orders}
+          totalOrder={totalOrder}
+          totalBelum={totalBelum}
+          totalProses={totalProses}
+          totalSelesai={totalSelesai}
+          onLihatSemua={() => setHalaman("order")}
         />
+      )}
 
-        {halaman === "dashboard" && (
-          <Dashboard
-            orders={orders}
-            totalOrder={totalOrder}
-            totalBelum={totalBelum}
-            totalProses={totalProses}
-            totalSelesai={totalSelesai}
-            onLihatSemua={() => setHalaman("order")}
-          />
-        )}
+      {halaman === "order" && (
+        <Order
+          orders={orders}
+          onUbahStatus={ubahStatus}
+          onTambahOrder={tambahOrder}
+          onHapusSemuaOrder={handleHapusSemuaOrder}
+        />
+      )}
 
-        {halaman === "order" && (
-          <Order
-            orders={orders}
-            onUbahStatus={ubahStatus}
-            onTambahOrder={tambahOrder}
-            onHapusSemuaOrder={handleHapusSemuaOrder}
-          />
-        )}
+      {halaman === "stock" && (
+        <Stock
+          stockItems={stockItems}
+          loading={stockLoading}
+          cariStock={cariStock}
+          setCariStock={setCariStock}
+          namaBaru={namaBaru}
+          setNamaBaru={setNamaBaru}
+          hargaBaru={hargaBaru}
+          setHargaBaru={setHargaBaru}
+          onTambahBarang={handleTambahBarang}
+          menyimpanBarang={menyimpanBarang}
+          onUbahStockStatus={handleUbahStockStatus}
+          onUbahHarga={handleUbahHarga}
+          onHapusBarang={handleHapusBarang}
+          onHapusSemuaBarang={handleHapusSemuaBarang}
+          onImportBarang={handleImportBarang}
+        />
+      )}
 
-        {halaman === "stock" && (
-          <Stock
-            stockItems={stockItems}
-            loading={stockLoading}
-            cariStock={cariStock}
-            setCariStock={setCariStock}
-            namaBaru={namaBaru}
-            setNamaBaru={setNamaBaru}
-            hargaBaru={hargaBaru}
-            setHargaBaru={setHargaBaru}
-            onTambahBarang={handleTambahBarang}
-            menyimpanBarang={menyimpanBarang}
-            onUbahStockStatus={handleUbahStockStatus}
-            onUbahHarga={handleUbahHarga}
-            onHapusBarang={handleHapusBarang}
-            onHapusSemuaBarang={handleHapusSemuaBarang}
-            onImportBarang={handleImportBarang}
-          />
-        )}
+      {halaman === "riwayat" && (
+        <Riwayat orders={orders} onRestore={handleRestoreOrder} onHapusSemuaRiwayat={handleHapusSemuaRiwayat} />
+      )}
 
-        {halaman === "riwayat" && (
-          <Riwayat orders={orders} onRestore={handleRestoreOrder} onHapusSemuaRiwayat={handleHapusSemuaRiwayat} />
-        )}
-
-        {halaman === "kustomisasi" && (
-          <Kustomisasi
-            qris={qris}
-            rekeningList={rekeningList}
-            loading={kustomisasiLoading}
-            onUploadQris={uploadQris}
-            onHapusQris={hapusQris}
-            onTambahRekening={tambahRekening}
-            onHapusRekening={hapusRekening}
-          />
-        )}
-      </main>
-    </div>
+      {halaman === "kustomisasi" && (
+        <Kustomisasi
+          qris={qris}
+          rekeningList={rekeningList}
+          loading={kustomisasiLoading}
+          onUploadQris={uploadQris}
+          onHapusQris={hapusQris}
+          onTambahRekening={tambahRekening}
+          onHapusRekening={hapusRekening}
+        />
+      )}
+    </DashboardLayout>
   );
 }

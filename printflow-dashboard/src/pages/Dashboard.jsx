@@ -21,12 +21,12 @@ import {
 } from "recharts";
 import { warna, gradien, bayangan } from "../styles/theme";
 import { addDays, startOfDay, formatTgl, isSameDay } from "../utils/date";
-import StatCard from "../components/StatCard";
-import LegendRow from "../components/LegendRow";
-import ChartTooltip from "../components/ChartTooltip";
-import StatusPill from "../components/StatusPill";
-import EmptyState from "../components/EmptyState";
-import DateRangeDropdown from "../components/DateRangeDropdown";
+import StatCard from "../molecules/StatCard";
+import LegendRow from "../molecules/LegendRow";
+import ChartTooltip from "../atoms/ChartTooltip";
+import StatusPill from "../atoms/StatusPill";
+import EmptyState from "../atoms/EmptyState";
+import DateRangeDropdown from "../molecules/DateRangeDropdown";
 
 const warnaGaris = "rgba(255,255,255,0.04)";
 const warnaGarisChart = "#6D84FF";

@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import ProtectedRoute from "./components/ProtectedRoute";
-import GuestRoute from "./components/GuestRoute";
+import ProtectedRoute from "./guards/ProtectedRoute";
+import GuestRoute from "./guards/GuestRoute";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import VerifikasiOtp from "./pages/VerifikasiOtp";

@@ -2,10 +2,10 @@ import { useState } from "react";
 import { MessageCircle, Search, Trash2 } from "lucide-react";
 import { warna, gradien, bayangan, statusWarna, inputStyle } from "../styles/theme";
 import { inisial } from "../utils/format";
-import PillDropdown from "../components/PillDropdown";
-import EmptyState from "../components/EmptyState";
-import OrderFormModal from "../components/OrderFormModal";
-import ConfirmModal from "../components/ConfirmModal";
+import PillDropdown from "../molecules/PillDropdown";
+import EmptyState from "../atoms/EmptyState";
+import OrderFormModal from "../organisms/OrderFormModal";
+import ConfirmModal from "../organisms/ConfirmModal";
 
 function bukaWA(nomor, detail) {
   const pesan = encodeURIComponent(`Halo kak, mengenai order ${detail}`);

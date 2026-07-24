@@ -1,7 +1,7 @@
 import { useNavigate, Link } from "react-router-dom";
 import { Zap } from "lucide-react";
-import GoogleButton from "../components/GoogleButton";
-import EmailForm from "../components/EmailForm";
+import GoogleButton from "../molecules/GoogleButton";
+import EmailForm from "../molecules/EmailForm";
 import { warna } from "../styles/theme";
 
 export default function Login() {

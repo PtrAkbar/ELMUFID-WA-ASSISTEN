@@ -1,6 +1,6 @@
 import { AlertTriangle } from "lucide-react";
 import { warna } from "../styles/theme";
-import Modal from "./Modal";
+import Modal from "../molecules/Modal";
 
 export default function ConfirmModal({ open, onClose, onConfirm, judul, pesan, labelKonfirmasi = "Ya, hapus" }) {
   return (

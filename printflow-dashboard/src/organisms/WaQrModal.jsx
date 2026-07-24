@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, WifiOff, CheckCircle2, X } from "lucide-react";
 import { warna } from "../styles/theme";
-import Modal from "./Modal";
+import Modal from "../molecules/Modal";
 
 const pesanStatus = {
   "connecting-server": "Menghubungkan ke server bot...",

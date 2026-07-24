@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { warna } from "../styles/theme";
-import ButtonLoading from "../loading/ButtonLoading";
+import ButtonLoading from "../atoms/ButtonLoading";
 
 export default function EmailForm({ onTerkirim }) {
   const [email, setEmail] = useState("");

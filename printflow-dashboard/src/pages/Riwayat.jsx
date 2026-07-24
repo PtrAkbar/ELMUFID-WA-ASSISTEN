@@ -4,8 +4,8 @@ import { warna, gradien, bayangan, inputStyle } from "../styles/theme";
 import { bulanTahunKey, formatBulanTahun, formatJam, toISO } from "../utils/date";
 import { formatRupiah, formatTanggal } from "../lib/orders";
 import { unduhRekapExcel } from "../utils/exportExcel";
-import EmptyState from "../components/EmptyState";
-import ConfirmModal from "../components/ConfirmModal";
+import EmptyState from "../atoms/EmptyState";
+import ConfirmModal from "../organisms/ConfirmModal";
 
 function bukaWA(nomor, detail) {
   const pesan = encodeURIComponent(`Halo kak, mengenai order ${detail}`);

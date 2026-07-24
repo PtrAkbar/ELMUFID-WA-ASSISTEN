@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { warna, gradien, bayangan } from "../styles/theme";
-import Modal from "./Modal";
+import Modal from "../molecules/Modal";
 
 export default function EditHargaModal({ open, onClose, barang, onSubmit }) {
   const [harga, setHarga] = useState("");

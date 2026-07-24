@@ -1,6 +1,6 @@
 import { useLocation, Navigate } from "react-router-dom";
 import { Zap } from "lucide-react";
-import OtpForm from "../components/OtpForm";
+import OtpForm from "../molecules/OtpForm";
 import { warna } from "../styles/theme";
 
 export default function VerifikasiOtp() {

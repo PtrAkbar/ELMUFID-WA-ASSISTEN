@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { warna, gradien, bayangan } from "../styles/theme";
-import Modal from "./Modal";
+import Modal from "../molecules/Modal";
 
 export default function OrderFormModal({ open, onClose, onSubmit }) {
   const [nama, setNama] = useState("");

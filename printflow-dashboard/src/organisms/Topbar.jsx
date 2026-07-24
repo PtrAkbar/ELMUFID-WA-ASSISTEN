@@ -1,6 +1,6 @@
 import { warna } from "../styles/theme";
-import NotificationBell from "./NotificationBell";
-import ProfileMenu from "./ProfileMenu";
+import NotificationBell from "../molecules/NotificationBell";
+import ProfileMenu from "../molecules/ProfileMenu";
 
 export default function Topbar({ title, sub, notifications, email, onLogout }) {
   return (

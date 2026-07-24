@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import { Trash2, Upload, Image as ImageIcon } from "lucide-react";
 import { warna, gradien, bayangan, inputStyle } from "../styles/theme";
-import EmptyState from "../components/EmptyState";
-import ConfirmModal from "../components/ConfirmModal";
+import EmptyState from "../atoms/EmptyState";
+import ConfirmModal from "../organisms/ConfirmModal";
 
 export default function Kustomisasi({ qris, rekeningList, loading, onUploadQris, onHapusQris, onTambahRekening, onHapusRekening }) {
   const [namaBank, setNamaBank] = useState("");

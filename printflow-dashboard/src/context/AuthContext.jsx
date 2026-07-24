@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import SessionLoader from "../components/SessionLoader";
+import SessionLoader from "../atoms/SessionLoader";
 
 const LOGIN_URL = import.meta.env.VITE_LOGIN_URL || "http://localhost:5174/login";
 

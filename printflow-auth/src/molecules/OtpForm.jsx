@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { warna } from "../styles/theme";
-import ButtonLoading from "../loading/ButtonLoading";
+import ButtonLoading from "../atoms/ButtonLoading";
 
 export default function OtpForm({ email }) {
   const [kode, setKode] = useState("");

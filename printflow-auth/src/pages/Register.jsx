@@ -1,6 +1,6 @@
 import { useNavigate, Link } from "react-router-dom";
 import { Zap } from "lucide-react";
-import EmailForm from "../components/EmailForm";
+import EmailForm from "../molecules/EmailForm";
 import { warna } from "../styles/theme";
 
 export default function Register() {

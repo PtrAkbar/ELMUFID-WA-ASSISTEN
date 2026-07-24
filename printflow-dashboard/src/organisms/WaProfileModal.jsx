@@ -1,6 +1,6 @@
 import { Phone, LogOut, CheckCircle2, X } from "lucide-react";
 import { warna, gradien, bayangan } from "../styles/theme";
-import Modal from "./Modal";
+import Modal from "../molecules/Modal";
 
 export default function WaProfileModal({ open, onClose, nomor, onLogout }) {
   return (

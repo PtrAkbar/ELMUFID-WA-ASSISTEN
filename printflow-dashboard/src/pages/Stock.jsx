@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
 import { Search, Trash2, Pencil, Upload } from "lucide-react";
 import { warna, gradien, bayangan, inputStyle } from "../styles/theme";
-import PillDropdown from "../components/PillDropdown";
-import EmptyState from "../components/EmptyState";
-import ConfirmModal from "../components/ConfirmModal";
-import EditHargaModal from "../components/EditHargaModal";
+import PillDropdown from "../molecules/PillDropdown";
+import EmptyState from "../atoms/EmptyState";
+import ConfirmModal from "../organisms/ConfirmModal";
+import EditHargaModal from "../organisms/EditHargaModal";
 
 export default function Stock({
   stockItems,
