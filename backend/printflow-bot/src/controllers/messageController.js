@@ -7,6 +7,7 @@ const paymentConfigModel = require('../models/paymentConfigModel');
 const paymentFlow = require('../services/paymentFlow');
 const adminMode = require('../services/adminMode');
 const filePrintFlow = require('../services/filePrintFlow');
+const { antrikanPerNomor } = require('../services/perNomorQueue');
 const { formatRupiah } = require('../utils/formatter');
 const env = require('../config/env');
 
@@ -14,6 +15,25 @@ const env = require('../config/env');
 // deterministik (bukan lewat intent AI) supaya gak pernah meleset, karena ini
 // harus langsung memicu mode admin (bot berhenti total buat kontak itu).
 const KATA_MINTA_ADMIN = /\b(admin|customer service|\bcs\b|orang asli|dihubungkan|sambungkan|hubungkan)\b/i;
+
+// Kata kunci customer nanya soal metode pembayaran di luar alur konfirmasi
+// order (lihat langkah 7 di handleIncomingMessage) -- dicek deterministik
+// karena ini menyangkut uang, gak boleh diserahkan ke AI buat improvisasi.
+const KATA_TANYA_METODE_BAYAR = /\b(qris|metode\s*(pembayaran|bayar)?|cara\s*(bayar\w*|pembayaran)|bisa\s*(pakai|pake)?\s*(transfer|tf)|ada\s*transfer)\b/i;
+
+// Deteksi "tiap file mau dicetak berapa lembar/kali" dari teks customer
+// (misal "masing-masing 10 lembar", "tiap file 5 kali", "per file 3
+// rangkap") -- dicek deterministik (regex), BUKAN diserahkan ke AI, karena
+// field ini dipakai buat KALIKAN harga (kalau salah baca, salah tagih).
+// Default 1 (gak ada perbanyakan) kalau gak kedeteksi pola ini.
+const POLA_SALINAN_PER_FILE = /\b(?:masing[\s-]*masing|tiap|setiap|per\s*file)\D{0,12}?(\d+)\s*(?:lembar|kali|rangkap|copy|copies)?\b/i;
+
+function deteksiSalinanPerFile(teks) {
+  const match = POLA_SALINAN_PER_FILE.exec(String(teks || ''));
+  if (!match) return 1;
+  const angka = Number(match[1]);
+  return Number.isFinite(angka) && angka > 0 ? angka : 1;
+}
 
 function formatRincianText(rincian, total) {
   const teks = rincian
@@ -35,6 +55,154 @@ function formatInfoTambahanText(infoTambahan) {
     })
     .join('\n');
   return `\n\nOh iya, soal yang kamu tanya juga:\n${baris}`;
+}
+
+// Balasan soal METODE & INFO PEMBAYARAN -- template tetap (BUKAN dikarang AI),
+// sama alasannya kayak buildQuoteReply: ini menyangkut uang sungguhan (metode
+// yang bener-bener tersedia, nomor rekening asli, klaim gambar sudah terkirim).
+// Sebelumnya ini diserahkan ke AI (susunBalasanAlami) dan modelnya (llama-3.1
+// -8b-instant, dipilih karena cepat, tapi kurang taat instruksi) pernah/bisa
+// mengabaikan instruksi "kalau ada QRIS/transfer, tawarin semua" dan malah asal
+// bilang "cuma bisa cash" walau sebenarnya ada opsi lain -- atau ngarang "gambar
+// QRIS sudah dikirim" padahal gak pernah beneran nempel. Bug kelas ini gak boleh
+// bisa kejadian lagi buat hal sekritis metode bayar, makanya di-hardcode.
+function formatOpsiPembayaranText(opsi) {
+  const label = { cash: 'cash', qris: 'QRIS', transfer: 'transfer' };
+  return opsi.map((o) => label[o] || o).join(' / ');
+}
+
+function buildOrderDikonfirmasiCashOnlyText({ detailOrder, total, sedangNambahOrder, infoTambahan }) {
+  const judul = sedangNambahOrder ? 'Oke kak, tambahan pesanannya:' : 'Baik kak, pesanannya:';
+  return (
+    [judul, `- ${detailOrder}`, `- Total: ${formatRupiah(total)}`, `Pembayaran di ${env.storeName} cuma bisa cash ya kak, langsung datang ke toko kami.`].join(
+      '\n'
+    ) + formatInfoTambahanText(infoTambahan)
+  );
+}
+
+function buildTanyaMetodeText({ opsiPembayaran, sedangNambahOrder, rincianText, total, infoTambahan }) {
+  const judul = sedangNambahOrder ? 'Oke kak, tambahan pesanannya:' : 'Baik kak, pesanannya:';
+  return (
+    [judul, `- ${rincianText}`, `- Total: ${formatRupiah(total)}`, `Mau bayar pakai ${formatOpsiPembayaranText(opsiPembayaran)} kak?`].join('\n') +
+    formatInfoTambahanText(infoTambahan)
+  );
+}
+
+function buildMenungguPilihanMetodeText(opsiPembayaran) {
+  return `Kak, mau bayar pakai metode yang mana ya -- ${formatOpsiPembayaranText(opsiPembayaran)}?`;
+}
+
+function buildOrderDikonfirmasiCashText({ detailOrder, total }) {
+  return [
+    'Baik kak, pesanannya:',
+    `- ${detailOrder}`,
+    `- Total: ${formatRupiah(total)}`,
+    `Sudah saya catat, pembayaran cash ya -- silakan datang ke toko ${env.storeName} kami.`,
+  ].join('\n');
+}
+
+function buildKirimInfoQrisText({ rincianText, total }) {
+  return [
+    'Oke kak, rinciannya:',
+    `- ${rincianText}`,
+    `- Total: ${formatRupiah(total)}`,
+    'Ini gambar QRIS-nya ya kak -- kalau sudah transfer, tolong balas "sudah" dan kirim foto bukti pembayarannya ya.',
+  ].join('\n');
+}
+
+function buildKirimInfoRekeningText({ rincianText, total, daftarRekening }) {
+  const daftarText = daftarRekening
+    .map((r) => `- ${r.bank}${r.atasNama ? ` a.n. ${r.atasNama}` : ''}: ${r.nomor}`)
+    .join('\n');
+  return [
+    'Oke kak, rinciannya:',
+    `- ${rincianText}`,
+    `- Total: ${formatRupiah(total)}`,
+    'Bisa transfer ke:',
+    daftarText,
+    'Kalau sudah transfer, tolong balas "sudah" dan kirim foto bukti pembayarannya ya kak.',
+  ].join('\n');
+}
+
+// Teks quote file -- rapi pakai bullet biar gampang dibaca (bukan satu
+// paragraf panjang). salinanPerFile > 1 disebut eksplisit biar customer tau
+// itungannya udah termasuk perbanyakan, bukan cuma halaman asli filenya.
+function buildKonfirmasiFileText(hasilUkuran, hasilCek, order) {
+  const barisSalinan =
+    hasilUkuran.salinanPerFile > 1
+      ? `- ${hasilUkuran.jumlahFile} file x ${hasilUkuran.salinanPerFile} lembar tiap file = ${hasilUkuran.totalHalaman} lembar,`
+      : `- Totalnya ada ${hasilUkuran.totalHalaman} lembar (dari ${hasilUkuran.jumlahFile} file),`;
+  return [
+    'Oke kak, ini hasilnya:',
+    barisSalinan,
+    `- diprint pakai ${hasilCek.nama} (${formatRupiah(hasilCek.harga)}/lembar).`,
+    `- Totalnya ${formatRupiah(order.total)}.`,
+    'Ada file/barang lain yang mau ditambahin kak, atau segini aja?',
+  ].join('\n');
+}
+
+// Dipakai pas batch file selesai terkumpul (lihat selesaikanBatchFile) atau
+// pas nunggu jawaban ukuran kertas -- coba cocokkan teks ke stock pakai AI
+// (biar handle typo/istilah beda) DAN deteksi salinan-per-file (deterministik,
+// lihat deteksiSalinanPerFile), kalau ukurannya ketemu & tersedia langsung
+// tetapkan. null kalau ukuran gak ketemu di teks.
+async function cobaTetapkanUkuranDariTeks(nomor, teks) {
+  if (!teks || !teks.trim()) return null;
+  const daftarStockUkuran = await getAllStock();
+  const analysisUkuran = await analyzeMessage(teks, daftarStockUkuran, []);
+  const kandidat = analysisUkuran.barang.find((b) => b.produk_cocok);
+  const hasilCek = kandidat ? checkStock(daftarStockUkuran, kandidat.produk, kandidat.produk_cocok) : null;
+  if (!hasilCek?.ditemukan || !hasilCek.tersedia) return null;
+
+  const salinanPerFile = deteksiSalinanPerFile(teks);
+  const hasilUkuran = filePrintFlow.tetapkanUkuran(nomor, { nama: hasilCek.nama, harga: hasilCek.harga }, salinanPerFile);
+  const { order } = hitungDetailOrder(hasilUkuran.barangValid, []);
+  return buildKonfirmasiFileText(hasilUkuran, hasilCek, order);
+}
+
+// Dipanggil begitu batch file (lihat filePrintFlow.js) diam selama
+// JEDA_BATCH_MS -- semua file yang sempat nyusul dalam jeda itu udah pasti
+// ketampung, baru sekarang aman buat dihitung & dibalas. Beda dari alur
+// biasa (return {text} dari handleIncomingMessage) -- ini dipanggil dari
+// timer, bukan dari pesan yang lagi diproses, jadi kirim balasannya lewat
+// whatsappService.kirimBalasanLangsung (BUKAN kirimPesanKe) -- ini balasan
+// TERTUNDA atas chat yang beneran baru masuk, bukan kontak proaktif/dingin,
+// jadi gak boleh kena cek firstContactGuard (pernah salah pakai kirimPesanKe
+// sebelumnya & bikin kontak @lid ke-tolak walau jelas baru chat). require di
+// dalam function (bukan di atas file) buat hindari circular require
+// (whatsappService juga require messageController).
+async function selesaikanBatchFile(nomor) {
+  const whatsappService = require('../services/whatsappService');
+  const { jedaAcak } = require('../services/naturalDelay');
+  const state = filePrintFlow.sedangMengumpulkan(nomor);
+  if (!state) return; // batch udah dibatalkan/diproses duluan lewat jalur lain
+
+  const jumlahFile = state.files.length;
+  const teksGabungan = filePrintFlow.ambilTeksTerkumpul(nomor);
+
+  // Batch "berat" (banyak file) -- kasih tau dulu lagi diitung, biar
+  // customer gak nunggu diem tanpa respon sama sekali selama beberapa detik
+  // pas ngitung banyak file sekaligus. Dikasih jeda BENERAN sebelum hasilnya
+  // nyusul (bukan langsung ditembak balik detik itu juga) -- soalnya kalau
+  // enggak, "sebentar ya kak" itu jadi basa-basi kosong yang kelihatan palsu.
+  // Hasil akhirnya sendiri (buildKonfirmasiFileText) TIDAK ngulang lagi kata
+  // "sebentar/cek dulu" -- langsung ke hasil, biar gak dobel kayak sebelumnya.
+  if (jumlahFile >= 3) {
+    await whatsappService.kirimBalasanLangsung(nomor, { text: 'Sebentar ya kak, saya hitung dulu semua filenya...' });
+    await jedaAcak(2000, 3500);
+  }
+
+  const balasanLangsung = await cobaTetapkanUkuranDariTeks(nomor, teksGabungan);
+  if (balasanLangsung) {
+    tambahPesan(nomor, 'assistant', balasanLangsung);
+    await whatsappService.kirimBalasanLangsung(nomor, { text: balasanLangsung });
+    return;
+  }
+
+  filePrintFlow.pindahKeTahapUkuran(nomor);
+  const balasan = 'Oke kak, mau diprint pakai ukuran kertas apa?';
+  tambahPesan(nomor, 'assistant', balasan);
+  await whatsappService.kirimBalasanLangsung(nomor, { text: balasan });
 }
 
 // Menentukan apa saja yang masih kurang untuk sebuah order, secara
@@ -102,7 +270,7 @@ function cekKelengkapanOrder(daftarStock, analysis) {
 // akhir sebagai teks terpisah, gak ikut ke perhitungan total.
 function buildQuoteReply(barangValid, jasaTambahanList, infoTambahan) {
   const order = calculateOrder({ barangValid, jasaTambahanList });
-  return `Berikut rincian harga dari ${env.storeName}:\n${formatRincianText(order.rincian, order.total)}\n\nApakah pesanan ini bisa dilanjutkan, kak?${formatInfoTambahanText(infoTambahan)}`;
+  return `Berikut rincian harga dari ${env.storeName}:\n${formatRincianText(order.rincian, order.total)}\n\nAda barang lain yang mau ditambahin kak, atau segini aja?${formatInfoTambahanText(infoTambahan)}`;
 }
 
 function hitungDetailOrder(barangValid, jasaTambahanList) {
@@ -176,18 +344,12 @@ async function mulaiAtauLanjutkanOrder(customerMessage, kelengkapan, analysis, n
     // kumulatif seluruh order termasuk yang sudah pernah dibayar sebelumnya)
     // -- customer nanya/bayar buat porsi yang baru ini aja.
     return {
-      text: await susunBalasanAlami(
-        customerMessage,
-        {
-          situasi: 'order_dikonfirmasi_cash_only',
-          namaToko: env.storeName,
-          detailOrder: detail,
-          total: order.total,
-          sedangNambahOrder: Boolean(orderAktif),
-          infoTambahan: kelengkapan.infoTambahan,
-        },
-        riwayat
-      ),
+      text: buildOrderDikonfirmasiCashOnlyText({
+        detailOrder: detail,
+        total: order.total,
+        sedangNambahOrder: Boolean(orderAktif),
+        infoTambahan: kelengkapan.infoTambahan,
+      }),
     };
   }
 
@@ -206,18 +368,13 @@ async function mulaiAtauLanjutkanOrder(customerMessage, kelengkapan, analysis, n
   const { order, detail } = hitungDetailOrder(kelengkapan.barangValid, analysis.jasa_tambahan);
 
   return {
-    text: await susunBalasanAlami(
-      customerMessage,
-      {
-        situasi: 'tanya_metode_pembayaran',
-        opsiPembayaran: opsi,
-        sedangNambahOrder: Boolean(orderAktif),
-        rincianText: detail,
-        total: order.total,
-        infoTambahan: kelengkapan.infoTambahan,
-      },
-      riwayat
-    ),
+    text: buildTanyaMetodeText({
+      opsiPembayaran: opsi,
+      sedangNambahOrder: Boolean(orderAktif),
+      rincianText: detail,
+      total: order.total,
+      infoTambahan: kelengkapan.infoTambahan,
+    }),
   };
 }
 
@@ -251,37 +408,22 @@ async function lanjutkanPembayaran(customerMessage, tunggu, metode, nomor, nomor
   // (delta), BUKAN orderTersimpan.total yang kumulatif -- lihat catatan di
   // mulaiAtauLanjutkanOrder.
   if (metode === 'cash') {
-    return {
-      text: await susunBalasanAlami(
-        customerMessage,
-        { situasi: 'order_dikonfirmasi_cash', namaToko: env.storeName, detailOrder: detail, total: order.total },
-        riwayat
-      ),
-    };
+    return { text: buildOrderDikonfirmasiCashText({ detailOrder: detail, total: order.total }) };
   }
 
   if (metode === 'qris') {
     const qris = await paymentConfigModel.ambilQrisConfig();
-    const text = await susunBalasanAlami(
-      customerMessage,
-      { situasi: 'kirim_info_qris', rincianText: detail, total: order.total },
-      riwayat
-    );
+    const text = buildKirimInfoQrisText({ rincianText: detail, total: order.total });
     return { text, gambarUrl: qris?.gambar_url || null };
   }
 
   // transfer
   const daftarRekening = await paymentConfigModel.ambilDaftarRekening();
-  const text = await susunBalasanAlami(
-    customerMessage,
-    {
-      situasi: 'kirim_info_rekening',
-      rincianText: detail,
-      total: order.total,
-      daftarRekening: daftarRekening.map((r) => ({ bank: r.nama_bank, nomor: r.nomor_rekening, atasNama: r.atas_nama })),
-    },
-    riwayat
-  );
+  const text = buildKirimInfoRekeningText({
+    rincianText: detail,
+    total: order.total,
+    daftarRekening: daftarRekening.map((r) => ({ bank: r.nama_bank, nomor: r.nomor_rekening, atasNama: r.atas_nama })),
+  });
   return { text };
 }
 
@@ -334,20 +476,31 @@ async function handleIncomingMessage(customerMessage, nomor = 'unknown', namaPen
   // 2. File (PDF/gambar) baru masuk buat diprint -- INTERUPSI apapun state
   //    lain yang lagi jalan (lagi nunggu metode pembayaran, dll), soalnya
   //    customer bisa aja nyusul kirim file kapan aja secara natural, gak
-  //    harus nunggu obrolan sebelumnya kelar dulu. Ditanya ukuran kertas,
-  //    TANPA sebut nama file/jumlah halaman (baru ditampilkan pas kalkulasi
-  //    di langkah 3). Beberapa file sekaligus/berturut ditampung ke batch
-  //    yang sama, cuma ditanya SEKALI -- file berikutnya gak dibales apa-apa
-  //    (text: null), supaya gak spam pertanyaan yang sama berkali-kali.
+  //    harus nunggu obrolan sebelumnya kelar dulu. TAPI belum langsung
+  //    dibalas -- WhatsApp ngirim tiap file sebagai pesan terpisah, jadi
+  //    kalau langsung diproses begitu file PERTAMA nyampe, hitungannya
+  //    keburu salah (baru ngitung 1 dari beberapa file yang nyusul). Jadi
+  //    ditampung dulu ke batch & nunggu jeda diam (lihat filePrintFlow.js,
+  //    JEDA_BATCH_MS) sebelum bener-bener diproses (selesaikanBatchFile) --
+  //    tiap ada file baru, jeda-nya di-reset lagi.
   if (infoFile) {
-    const { sudahAdaSebelumnya } = filePrintFlow.tambahFile(nomor, infoFile);
+    filePrintFlow.tambahFile(nomor, infoFile);
+    if (customerMessage.trim()) filePrintFlow.tambahTeks(nomor, customerMessage);
     tambahPesan(nomor, 'user', customerMessage || '[kirim file]');
-    if (sudahAdaSebelumnya) {
-      return { text: null };
-    }
-    const balasan = 'Oke kak, mau diprint pakai ukuran kertas apa?';
-    tambahPesan(nomor, 'assistant', balasan);
-    return { text: balasan };
+    filePrintFlow.mulaiTimerBatch(nomor, () => antrikanPerNomor(nomor, () => selesaikanBatchFile(nomor)));
+    return { text: null };
+  }
+
+  // 2b. Teks (bukan file) yang nyusul SELAGI batch file masih "mengumpulkan"
+  //    (misal caption filenya kosong, terus disusul chat terpisah "pake a4
+  //    semua ya") -- ditampung jadi bagian dari batch yang sama juga, jeda
+  //    di-reset lagi, BUKAN diproses sebagai pesan berdiri sendiri.
+  const sedangMengumpulkanFile = filePrintFlow.sedangMengumpulkan(nomor);
+  if (sedangMengumpulkanFile && customerMessage.trim()) {
+    filePrintFlow.tambahTeks(nomor, customerMessage);
+    tambahPesan(nomor, 'user', customerMessage);
+    filePrintFlow.mulaiTimerBatch(nomor, () => antrikanPerNomor(nomor, () => selesaikanBatchFile(nomor)));
+    return { text: null };
   }
 
   // 3. Lagi nunggu customer jawab ukuran kertas buat file (atau kumpulan
@@ -357,18 +510,18 @@ async function handleIncomingMessage(customerMessage, nomor = 'unknown', namaPen
   //    dikali harga kertas (lihat filePrintFlow.tetapkanUkuran).
   const fileMenungguUkuran = filePrintFlow.ambilMenungguUkuran(nomor);
   if (fileMenungguUkuran && customerMessage.trim()) {
-    const daftarStockUkuran = await getAllStock();
-    const analysisUkuran = await analyzeMessage(customerMessage, daftarStockUkuran, []);
-    const kandidat = analysisUkuran.barang.find((b) => b.produk_cocok);
-    const hasilCek = kandidat ? checkStock(daftarStockUkuran, kandidat.produk, kandidat.produk_cocok) : null;
-
-    if (hasilCek?.ditemukan && hasilCek.tersedia) {
-      const hasilUkuran = filePrintFlow.tetapkanUkuran(nomor, { nama: hasilCek.nama, harga: hasilCek.harga });
-      const { order } = hitungDetailOrder(hasilUkuran.barangValid, []);
-      const balasan = `Sebentar ya kak, saya cek dulu jumlah halaman filenya... oke, totalnya ada ${hasilUkuran.totalHalaman} halaman, diprint pakai ${hasilCek.nama} (${formatRupiah(hasilCek.harga)}/lembar). Totalnya ${formatRupiah(order.total)}. Mau dilanjutkan kak?`;
+    // Gabung sama teks yang udah ketampung SEBELUM ukuran ditanya (misal
+    // caption awal "masing-masing 5 lembar" yang gak nyebut ukuran) --
+    // kalau cuma pakai jawaban ukuran doang ("pake a4 kak"), instruksi
+    // salinan-per-file yang disebut lebih dulu itu ke-abaikan (bug yang
+    // pernah kejadian: total ke-itung 4 lembar padahal harusnya 4 file x 5
+    // lembar = 20).
+    const teksGabungan = `${filePrintFlow.ambilTeksTerkumpul(nomor)} ${customerMessage}`.trim();
+    const balasanLangsung = await cobaTetapkanUkuranDariTeks(nomor, teksGabungan);
+    if (balasanLangsung) {
       tambahPesan(nomor, 'user', customerMessage);
-      tambahPesan(nomor, 'assistant', balasan);
-      return { text: balasan };
+      tambahPesan(nomor, 'assistant', balasanLangsung);
+      return { text: balasanLangsung };
     }
 
     const balasan = `Maaf kak, ukuran kertas itu gak ada di kami. Mau pakai yang mana ya kak?`;
@@ -475,11 +628,7 @@ async function handleIncomingMessage(customerMessage, nomor = 'unknown', namaPen
     const opsi = ['cash'];
     if (config.adaQris) opsi.push('qris');
     if (config.adaRekening) opsi.push('transfer');
-    const balasan = await susunBalasanAlami(
-      customerMessage,
-      { situasi: 'menunggu_pilihan_metode_pembayaran', opsiPembayaran: opsi },
-      riwayat
-    );
+    const balasan = buildMenungguPilihanMetodeText(opsi);
     tambahPesan(nomor, 'user', customerMessage);
     tambahPesan(nomor, 'assistant', balasan);
     return { text: balasan };
@@ -508,6 +657,28 @@ async function handleIncomingMessage(customerMessage, nomor = 'unknown', namaPen
   if (!customerMessage.trim() && adaGambar) {
     const balasan = 'Maaf kak, gambarnya diterima tapi boleh dijelasin juga maksudnya apa?';
     tambahPesan(nomor, 'user', '[gambar]');
+    tambahPesan(nomor, 'assistant', balasan);
+    return { text: balasan };
+  }
+
+  // 7. Customer nanya-nanya soal metode pembayaran SECARA UMUM (bukan lagi
+  //    bagian dari alur konfirmasi order yang sudah kehandle deterministik
+  //    di atas -- itu prioritasnya lebih tinggi & sudah lewat sebelum sini).
+  //    Ini pengaman TAMBAHAN: kalau intent classifier AI keliru gak nganggep
+  //    pesan customer sebagai konfirmasi order (makanya gak nyentuh langkah
+  //    2-6 di atas), pertanyaan soal metode bayar TETAP HARUS dijawab pakai
+  //    config asli, BUKAN diserahkan ke obrolan bebas AI -- sudah pernah
+  //    kejadian AI ngarang "belum ada QRIS"/"sudah dikirim gambarnya" walau
+  //    sudah dikasih instruksi tegas di prompt buat gak melakukan itu (model
+  //    kecil/cepat yang dipakai gak selalu patuh instruksi kompleks). Jadi
+  //    dikunci di kode, bukan cuma di prompt.
+  if (!adaGambar && KATA_TANYA_METODE_BAYAR.test(customerMessage)) {
+    const config = await paymentFlow.konfigPembayaran();
+    const opsi = ['cash'];
+    if (config.adaQris) opsi.push('qris');
+    if (config.adaRekening) opsi.push('transfer');
+    const balasan = `Kami terima pembayaran ${formatOpsiPembayaranText(opsi)} ya kak.`;
+    tambahPesan(nomor, 'user', customerMessage);
     tambahPesan(nomor, 'assistant', balasan);
     return { text: balasan };
   }

@@ -16,6 +16,7 @@ const waState = require('./waState');
 const orderModel = require('../models/orderModel');
 const { simulasikanBalasanNatural } = require('./naturalDelay');
 const { antrikanPengiriman } = require('./messageQueue');
+const { antrikanPerNomor } = require('./perNomorQueue');
 const firstContactGuard = require('./firstContactGuard');
 const adminMode = require('./adminMode');
 
@@ -256,104 +257,117 @@ async function startWhatsAppBot() {
       const adaDokumen = Boolean(konten.documentMessage);
       if (!text && !adaGambar && !adaDokumen) continue;
 
-      // nomorUntukOrder: nomor HP ASLI dipakai konsisten sebagai identitas
-      // kontak buat order (tombol chat di dashboard, lihat Order.jsx) MAUPUN
-      // firstContactGuard di bawah -- kalau cuma pakai `from` mentah, kontak
-      // "@lid" bakal tercatat dengan identitas beda dari yang dipakai
-      // kirimPesanKe() nanti (yang selalu pakai nomor asli dari database),
-      // jadi notifikasi status order ke kontak itu bisa keblokir salah kira
-      // "belum pernah chat". Baileys (v7+) punya pemetaan lid<->nomor asli
-      // sendiri (signalRepository.lidMapping) yang lebih bisa diandalkan
-      // daripada senderPn -- dipakai sebagai fallback kedua kalau kosong.
-      let nomorUntukOrder = from;
-      if (isLid) {
-        try {
-          const pnJid =
-            message.key.senderPn || (await sock.signalRepository.lidMapping.getPNForLID(message.key.remoteJid));
-          if (pnJid) nomorUntukOrder = pnJid;
-        } catch (error) {
-          console.error('[WA] Gagal resolve nomor asli dari LID:', error.message);
-        }
-      }
-
-      await firstContactGuard.catatKontakMasuk(nomorUntukOrder);
-      adminMode.catatAktivitas(from);
-
-      if (adminMode.sedangModeAdmin(from)) {
-        console.log(`[WA] Mode admin aktif untuk ${from}, bot diam.`);
-        continue;
-      }
-
-      console.log(`[WA] Pesan masuk dari ${from}: ${text || (adaDokumen ? '(dokumen)' : '(gambar)')}`);
-
-      // File (PDF/gambar) yang dikirim customer buat diprint -- diunduh &
-      // (khusus PDF) dihitung halamannya di sini karena butuh Baileys
-      // langsung. Gambar yang kemungkinan besar bukti pembayaran (ada order
-      // "menunggu_bayar" aktif) SENGAJA gak diunduh di sini -- itu ditangani
-      // messageHandler tanpa perlu isi filenya (lihat catatan sebelumnya:
-      // admin cek bukti transfer manual langsung di WA, bukan lewat sistem).
-      let infoFile = null;
-      if (adaDokumen) {
-        infoFile = await ekstrakInfoFile(sock, message, konten, true).catch((error) => {
-          console.error('[WA] Gagal proses dokumen:', error.message);
-          return null;
-        });
-      } else if (adaGambar) {
-        const orderMenungguBayar = await orderModel
-          .ambilOrderAktifTerbaru(nomorUntukOrder)
-          .then((o) => o?.status === 'menunggu_bayar')
-          .catch(() => false);
-        if (!orderMenungguBayar) {
-          infoFile = await ekstrakInfoFile(sock, message, konten, false).catch((error) => {
-            console.error('[WA] Gagal proses gambar:', error.message);
-            return null;
-          });
-        }
-      }
-
-      try {
-        const balasan = await handleIncomingMessage(text, from, message.pushName, nomorUntukOrder, adaGambar, infoFile);
-
-        if (!balasan.text && !balasan.gambarUrl) {
-          // Sengaja gak ada balasan buat dikirim (misal file tambahan yang
-          // nambah ke batch print yang sama, sudah ditanya sekali sebelumnya)
-          // -- tandai pesan ini sudah dibaca aja, jangan nunjukin status
-          // "mengetik" buat balasan yang emang gak akan pernah dikirim.
-          await sock.readMessages([message.key]).catch((error) => {
-            console.error('[WA] Gagal tandai pesan sudah dibaca:', error.message);
-          });
-          continue;
-        }
-
-        await simulasikanBalasanNatural(sock, from, message);
-        // Cek ulang mode admin setelah jeda -- kalau admin sempat ambil alih
-        // pas bot lagi "mengetik", batalkan kirim balasan otomatis ini.
-        if (adminMode.sedangModeAdmin(from)) continue;
-
-        if (balasan.text) {
-          await kirimDanCatat(sock, from, { text: balasan.text });
-        }
-        if (balasan.gambarUrl) {
-          try {
-            const buffer = await ambilGambarBuffer(balasan.gambarUrl);
-            await kirimDanCatat(sock, from, { image: buffer });
-          } catch (error) {
-            console.error('[WA] Gagal kirim gambar QRIS:', error.message);
-            await kirimDanCatat(sock, from, {
-              text: 'Maaf kak, gambar QRIS-nya gagal terkirim, coba minta admin kirim manual ya.',
-            });
-          }
-        }
-      } catch (error) {
-        console.error('[WA] Gagal memproses pesan:', error);
-        await kirimDanCatat(sock, from, {
-          text: 'Mohon maaf, terjadi kendala teknis. Silakan coba beberapa saat lagi.',
-        });
-      }
+      // Seluruh pemrosesan pesan ini (dari resolve nomor sampai kirim balasan)
+      // diantrikan PER NOMOR (lihat perNomorQueue.js) -- BUKAN di-await
+      // langsung di sini, supaya nomor lain yang kebetulan kirim pesan
+      // bersamaan gak ikut ketahan nunggu nomor ini kelar diproses. Kalau
+      // nomor yang SAMA kirim beberapa pesan cepat berturut-turut (misal file
+      // lalu langsung susul jawaban ukuran kertas sebelum sempat dibalas),
+      // pesan keduanya WAJIB nunggu pemrosesan pesan pertama kelar dulu --
+      // tanpa ini dua pesan itu bisa balapan baca/tulis state yang sama
+      // (filePrintFlow, paymentFlow, conversationStore) dan urutannya kebalik.
+      antrikanPerNomor(from, () => prosesSatuPesan(sock, message, from, isLid, konten, text, adaGambar, adaDokumen));
     }
   });
 
   return sock;
+}
+
+async function prosesSatuPesan(sock, message, from, isLid, konten, text, adaGambar, adaDokumen) {
+  // nomorUntukOrder: nomor HP ASLI dipakai konsisten sebagai identitas
+  // kontak buat order (tombol chat di dashboard, lihat Order.jsx) MAUPUN
+  // firstContactGuard di bawah -- kalau cuma pakai `from` mentah, kontak
+  // "@lid" bakal tercatat dengan identitas beda dari yang dipakai
+  // kirimPesanKe() nanti (yang selalu pakai nomor asli dari database),
+  // jadi notifikasi status order ke kontak itu bisa keblokir salah kira
+  // "belum pernah chat". Baileys (v7+) punya pemetaan lid<->nomor asli
+  // sendiri (signalRepository.lidMapping) yang lebih bisa diandalkan
+  // daripada senderPn -- dipakai sebagai fallback kedua kalau kosong.
+  let nomorUntukOrder = from;
+  if (isLid) {
+    try {
+      const pnJid =
+        message.key.senderPn || (await sock.signalRepository.lidMapping.getPNForLID(message.key.remoteJid));
+      if (pnJid) nomorUntukOrder = pnJid;
+    } catch (error) {
+      console.error('[WA] Gagal resolve nomor asli dari LID:', error.message);
+    }
+  }
+
+  await firstContactGuard.catatKontakMasuk(nomorUntukOrder);
+  adminMode.catatAktivitas(from);
+
+  if (adminMode.sedangModeAdmin(from)) {
+    console.log(`[WA] Mode admin aktif untuk ${from}, bot diam.`);
+    return;
+  }
+
+  console.log(`[WA] Pesan masuk dari ${from}: ${text || (adaDokumen ? '(dokumen)' : '(gambar)')}`);
+
+  // File (PDF/gambar) yang dikirim customer buat diprint -- diunduh &
+  // (khusus PDF) dihitung halamannya di sini karena butuh Baileys
+  // langsung. Gambar yang kemungkinan besar bukti pembayaran (ada order
+  // "menunggu_bayar" aktif) SENGAJA gak diunduh di sini -- itu ditangani
+  // messageHandler tanpa perlu isi filenya (lihat catatan sebelumnya:
+  // admin cek bukti transfer manual langsung di WA, bukan lewat sistem).
+  let infoFile = null;
+  if (adaDokumen) {
+    infoFile = await ekstrakInfoFile(sock, message, konten, true).catch((error) => {
+      console.error('[WA] Gagal proses dokumen:', error.message);
+      return null;
+    });
+  } else if (adaGambar) {
+    const orderMenungguBayar = await orderModel
+      .ambilOrderAktifTerbaru(nomorUntukOrder)
+      .then((o) => o?.status === 'menunggu_bayar')
+      .catch(() => false);
+    if (!orderMenungguBayar) {
+      infoFile = await ekstrakInfoFile(sock, message, konten, false).catch((error) => {
+        console.error('[WA] Gagal proses gambar:', error.message);
+        return null;
+      });
+    }
+  }
+
+  try {
+    const balasan = await handleIncomingMessage(text, from, message.pushName, nomorUntukOrder, adaGambar, infoFile);
+
+    if (!balasan.text && !balasan.gambarUrl) {
+      // Sengaja gak ada balasan buat dikirim (misal file tambahan yang
+      // nambah ke batch print yang sama, sudah ditanya sekali sebelumnya)
+      // -- tandai pesan ini sudah dibaca aja, jangan nunjukin status
+      // "mengetik" buat balasan yang emang gak akan pernah dikirim.
+      await sock.readMessages([message.key]).catch((error) => {
+        console.error('[WA] Gagal tandai pesan sudah dibaca:', error.message);
+      });
+      return;
+    }
+
+    await simulasikanBalasanNatural(sock, from, message);
+    // Cek ulang mode admin setelah jeda -- kalau admin sempat ambil alih
+    // pas bot lagi "mengetik", batalkan kirim balasan otomatis ini.
+    if (adminMode.sedangModeAdmin(from)) return;
+
+    if (balasan.text) {
+      await kirimDanCatat(sock, from, { text: balasan.text });
+    }
+    if (balasan.gambarUrl) {
+      try {
+        const buffer = await ambilGambarBuffer(balasan.gambarUrl);
+        await kirimDanCatat(sock, from, { image: buffer });
+      } catch (error) {
+        console.error('[WA] Gagal kirim gambar QRIS:', error.message);
+        await kirimDanCatat(sock, from, {
+          text: 'Maaf kak, gambar QRIS-nya gagal terkirim, coba minta admin kirim manual ya.',
+        });
+      }
+    }
+  } catch (error) {
+    console.error('[WA] Gagal memproses pesan:', error);
+    await kirimDanCatat(sock, from, {
+      text: 'Mohon maaf, terjadi kendala teknis. Silakan coba beberapa saat lagi.',
+    });
+  }
 }
 
 // Mengirim pesan ke nomor tertentu memakai socket yang sedang aktif (dipakai
@@ -377,6 +391,21 @@ async function kirimPesanKe(jid, teks) {
     return;
   }
   await kirimDanCatat(currentSock, jid, { text: teks });
+}
+
+// Kirim balasan yang TERTUNDA beberapa detik (misal batch file yang nunggu
+// jeda diam, lihat selesaikanBatchFile di messageController.js) tapi tetap
+// balasan atas pesan yang BENERAN baru masuk -- BUKAN kontak dingin, jadi
+// TIDAK perlu (dan TIDAK BOLEH) dicek firstContactGuard kayak kirimPesanKe.
+// Beda juga soal identitas: `jid` di sini harus persis `from` yang dipakai
+// Baileys buat kontak ini (termasuk bentuk mentah "@lid"), BUKAN nomor asli
+// hasil resolve -- kalau ketuker, pesannya nyasar gagal terkirim.
+async function kirimBalasanLangsung(jid, content) {
+  if (!currentSock?.user) {
+    console.warn(`[WA] Belum terhubung ke WhatsApp, gagal kirim balasan tertunda ke ${jid}.`);
+    return;
+  }
+  await kirimDanCatat(currentSock, jid, content);
 }
 
 function pesanUntukStatus(status, order) {
@@ -433,4 +462,4 @@ async function kirimTesKeDiriSendiri() {
   return hasil;
 }
 
-module.exports = { startWhatsAppBot, logoutWhatsApp, kirimTesKeDiriSendiri, kirimPesanKe };
+module.exports = { startWhatsAppBot, logoutWhatsApp, kirimTesKeDiriSendiri, kirimPesanKe, kirimBalasanLangsung };

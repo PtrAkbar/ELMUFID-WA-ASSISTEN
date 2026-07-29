@@ -84,7 +84,21 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3098/api/orders)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3098/api/orders/events)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X PATCH http://localhost:3098/api/orders/1/status)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X DELETE http://localhost:3098/api/orders/aktif)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" -X DELETE http://localhost:3098/api/orders/aktif)",
+      "Bash(git rev-list *)",
+      "Bash(git cat-file *)",
+      "Bash(awk '$1==\"blob\"{print $3, $4}')",
+      "Bash(node -c src/controllers/messageController.js)",
+      "Bash(node -c src/services/groqService.js)",
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\" //V)",
+      "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Select-Object Id,StartTime,Path\")",
+      "Bash(powershell -Command \"Get-Process -Id 21392 -ErrorAction SilentlyContinue | Select-Object Id,StartTime\")",
+      "Bash(powershell -Command \"Get-CimInstance Win32_Process -Filter \\\\\"Name = 'node.exe' and CommandLine like '%src/index.js%'\\\\\" | Select-Object ProcessId, CreationDate\")",
+      "Bash(node -c src/services/whatsappService.js)",
+      "Bash(node -c src/services/perNomorQueue.js)",
+      "Bash(node -c src/services/aiPrompts.js)",
+      "Bash(node -c src/config/env.js)",
+      "Bash(node -c src/services/filePrintFlow.js)"
     ],
     "additionalDirectories": [
       "e:\\BOT WA ELMUFID\\wa-bot-percetakan\\session"
