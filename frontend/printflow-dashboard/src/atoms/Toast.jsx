@@ -1,6 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle } from "lucide-react";
-import { warna, gradien, bayangan } from "../styles/theme";
 
 export default function Toast({ pesan }) {
   return (
@@ -11,13 +10,13 @@ export default function Toast({ pesan }) {
           animate={{ opacity: 1, y: 0, x: "-50%" }}
           exit={{ opacity: 0, y: -16, x: "-50%" }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed top-6 left-1/2 z-50 flex items-center gap-2 rounded-full px-4 py-3"
-          style={{ background: gradien.aksenTombol, boxShadow: bayangan.glow }}
+          className="fixed top-6 left-1/2 z-50 flex items-center gap-2.5 rounded-2xl px-5 py-3 bg-slate-900/95 backdrop-blur-sm text-white shadow-2xl shadow-slate-900/20 text-sm font-semibold border border-slate-700/40"
         >
-          <AlertCircle size={16} className="text-white" />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "white" }}>{pesan}</span>
+          <AlertCircle size={18} className="text-amber-400 shrink-0" />
+          <span>{pesan}</span>
         </motion.div>
       )}
     </AnimatePresence>
   );
 }
+

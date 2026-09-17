@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
-import { Search, Trash2, Pencil, Upload } from "lucide-react";
-import { warna, gradien, bayangan, inputStyle } from "../styles/theme";
+import { Search, Trash2, Pencil, Upload, Plus } from "lucide-react";
 import PillDropdown from "../molecules/PillDropdown";
 import EmptyState from "../atoms/EmptyState";
 import ConfirmModal from "../organisms/ConfirmModal";
@@ -43,18 +42,20 @@ export default function Stock({
   );
 
   return (
-    <div className="rounded-3xl p-5" style={{ background: warna.kartu, border: `1px solid ${warna.garis}`, boxShadow: bayangan.kartu }}>
-      <div className="flex items-center justify-between mb-4">
-        <p style={{ fontSize: 16, fontWeight: 600, color: "#E5E7EB" }}>Daftar stock</p>
-        <div className="flex items-center gap-2">
+    <div className="bg-white rounded-3xl p-7 border border-slate-200/70 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-2 border-b border-slate-100">
+        <div>
+          <p className="text-lg font-bold text-slate-900 tracking-tight">Daftar Stock Bahan &amp; Barang</p>
+          <p className="text-sm text-slate-500 mt-0.5 font-medium">{stockItems.length} jenis item terdaftar</p>
+        </div>
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="relative">
-            <Search size={14} strokeWidth={2.3} className="absolute left-3 top-2.5" style={{ color: warna.teksSekunder }} />
+            <Search size={16} strokeWidth={2} className="absolute left-3.5 top-3 text-slate-400" />
             <input
               value={cariStock}
               onChange={(e) => setCariStock(e.target.value)}
-              placeholder="Cari kode atau nama barang"
-              className="rounded-full outline-none w-64"
-              style={{ ...inputStyle, fontSize: 14, padding: "8px 12px 8px 34px" }}
+              placeholder="Cari kode atau nama..."
+              className="rounded-xl outline-none w-64 text-sm text-slate-800 placeholder-slate-400 bg-slate-50/70 hover:bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-100 border border-slate-200 pl-10 pr-3.5 py-2.5 transition-all"
             />
           </div>
           <input
@@ -65,127 +66,118 @@ export default function Stock({
             onChange={handlePilihFile}
           />
           <button
+            type="button"
             onClick={() => inputFileRef.current?.click()}
             disabled={mengimpor}
-            className="flex items-center gap-1 rounded-full px-3 py-2"
-            style={{ fontSize: 12, fontWeight: 600, color: warna.teksSekunder, border: `1px solid ${warna.garis}`, opacity: mengimpor ? 0.6 : 1, transition: "background 0.2s ease" }}
-            onMouseEnter={(e) => !mengimpor && (e.currentTarget.style.background = warna.hover)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs md:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 shadow-sm border border-slate-200 transition-all cursor-pointer disabled:opacity-50"
           >
-            <Upload size={13} strokeWidth={2.3} /> {mengimpor ? "Mengimpor..." : "Import Excel"}
+            <Upload size={15} strokeWidth={2} />
+            <span>{mengimpor ? "Mengimpor..." : "Import Excel"}</span>
           </button>
           {stockItems.length > 0 && (
             <button
+              type="button"
               onClick={() => setKonfirmasiHapusSemua(true)}
-              className="flex items-center gap-1 rounded-full px-3 py-2"
-              style={{ fontSize: 12, fontWeight: 600, color: warna.bahaya, border: `1px solid ${warna.garis}`, transition: "background 0.2s ease" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = warna.bahayaBg)}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              className="flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors cursor-pointer"
             >
-              <Trash2 size={13} strokeWidth={2.3} /> Hapus semua
+              <Trash2 size={15} strokeWidth={2} /> Hapus Semua
             </button>
           )}
         </div>
       </div>
 
-      <div className="flex items-end gap-2 mb-5 rounded-3xl p-4" style={{ background: warna.bg }}>
-        <div className="flex-1">
-          <label style={{ fontSize: 12, fontWeight: 600, color: warna.teksSekunder }}>Nama barang</label>
+      {/* Inline Form Add Item */}
+      <div className="bg-slate-50/80 rounded-2xl p-5 mb-7 border border-slate-200/70 flex items-end gap-3.5 flex-wrap">
+        <div className="flex-1 min-w-[220px]">
+          <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Nama Barang</label>
           <input
             value={namaBaru}
             onChange={(e) => setNamaBaru(e.target.value)}
-            placeholder="Contoh: kertas hvs 70gsm"
-            className="w-full rounded-2xl outline-none mt-1"
-            style={{ ...inputStyle, background: warna.kartu, fontSize: 14, padding: "8px 12px" }}
+            placeholder="Contoh: Kertas HVS 70gsm"
+            className="w-full rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 px-4 py-2.5 mt-1.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
           />
         </div>
-        <div className="w-36">
-          <label style={{ fontSize: 12, fontWeight: 600, color: warna.teksSekunder }}>Harga (Rp)</label>
+        <div className="w-44">
+          <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Harga (Rp)</label>
           <input
             value={hargaBaru}
             onChange={(e) => setHargaBaru(e.target.value)}
             placeholder="300"
-            className="w-full rounded-2xl outline-none mt-1"
-            style={{ ...inputStyle, background: warna.kartu, fontSize: 14, padding: "8px 12px" }}
+            className="w-full rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 px-4 py-2.5 mt-1.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
           />
         </div>
         <button
+          type="button"
           onClick={onTambahBarang}
           disabled={menyimpanBarang}
-          className="text-white rounded-full px-4 py-2.5"
-          style={{ background: gradien.aksenTombol, boxShadow: bayangan.glowKecil, fontSize: 12, fontWeight: 600, opacity: menyimpanBarang ? 0.6 : 1, transition: "filter 0.2s ease" }}
-          onMouseEnter={(e) => !menyimpanBarang && (e.currentTarget.style.filter = "brightness(1.12)")}
-          onMouseLeave={(e) => (e.currentTarget.style.filter = "brightness(1)")}
+          className="flex items-center gap-2 text-white bg-blue-600 hover:bg-blue-700 rounded-xl px-5 py-2.5 text-sm font-semibold shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50 shrink-0"
         >
-          {menyimpanBarang ? "Menyimpan..." : "+ Tambah barang"}
+          <Plus size={16} strokeWidth={2.5} />
+          <span>{menyimpanBarang ? "Menyimpan..." : "Tambah Barang"}</span>
         </button>
       </div>
 
       {loading ? (
-        <EmptyState pesan="Memuat data stock..." />
+        <EmptyState pesan="Memuat data stock..." tinggi={200} />
       ) : stockTersaring.length === 0 ? (
-        <EmptyState pesan={cariStock ? "Barang tidak ditemukan" : "Belum ada barang di stock"} />
+        <EmptyState pesan={cariStock ? "Barang tidak ditemukan" : "Belum ada barang di stock"} tinggi={200} />
       ) : (
-        <table className="w-full">
-          <thead>
-            <tr style={{ textAlign: "left", color: warna.teksSekunder, borderBottom: `1px solid ${warna.garis}` }}>
-              <th style={{ fontSize: 12, fontWeight: 600, padding: "8px 0" }}>Kode</th>
-              <th style={{ fontSize: 12, fontWeight: 600, padding: "8px 0" }}>Nama barang</th>
-              <th style={{ fontSize: 12, fontWeight: 600, padding: "8px 0" }}>Harga</th>
-              <th style={{ fontSize: 12, fontWeight: 600, padding: "8px 0" }}>Status</th>
-              <th style={{ fontSize: 12, fontWeight: 600, padding: "8px 0", textAlign: "right" }}>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stockTersaring.map((s) => (
-              <tr
-                key={s.kode}
-                style={{ borderBottom: `1px solid ${warna.divider}`, transition: "background 0.15s ease" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-              >
-                <td style={{ fontSize: 14, fontWeight: 400, color: warna.teksSekunder, padding: "12px 0" }}>{s.kode}</td>
-                <td style={{ fontSize: 14, fontWeight: 700, padding: "12px 0", color: warna.teksUtama }}>{s.nama}</td>
-                <td style={{ fontSize: 14, fontWeight: 400, padding: "12px 0", color: warna.teksUtama }}>Rp{Number(s.harga).toLocaleString("id-ID")}</td>
-                <td style={{ padding: "12px 0" }}>
-                  <PillDropdown
-                    value={s.status}
-                    options={[
-                      { value: "masih", label: "Masih" },
-                      { value: "habis", label: "Habis" },
-                    ]}
-                    colorFor={(v) => (v === "masih" ? warna.muda : warna.biru)}
-                    onChange={(v) => onUbahStockStatus(s.kode, v)}
-                  />
-                </td>
-                <td style={{ padding: "12px 0", textAlign: "right" }}>
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => setBarangDiedit(s)}
-                      className="rounded-full inline-flex items-center justify-center"
-                      style={{ width: 32, height: 32, color: warna.teksSekunder, border: `1px solid ${warna.garis}`, transition: "background 0.2s ease" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = warna.hover)}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                      title="Ubah harga"
-                    >
-                      <Pencil size={14} strokeWidth={2.3} />
-                    </button>
-                    <button
-                      onClick={() => setBarangDihapus(s)}
-                      className="rounded-full inline-flex items-center justify-center"
-                      style={{ width: 32, height: 32, color: warna.bahaya, border: `1px solid ${warna.garis}`, transition: "background 0.2s ease" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = warna.bahayaBg)}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                      title="Hapus barang"
-                    >
-                      <Trash2 size={14} strokeWidth={2.3} />
-                    </button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <th className="py-3.5 font-bold">Kode</th>
+                <th className="py-3.5 font-bold">Nama Barang</th>
+                <th className="py-3.5 font-bold">Harga Satuan</th>
+                <th className="py-3.5 font-bold">Status Stock</th>
+                <th className="py-3.5 font-bold text-right">Aksi</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {stockTersaring.map((s) => (
+                <tr
+                  key={s.kode}
+                  className="hover:bg-slate-50/80 transition-colors"
+                >
+                  <td className="py-4 text-sm text-slate-500 font-mono font-medium">{s.kode}</td>
+                  <td className="py-4 text-sm md:text-[15px] font-bold text-slate-900">{s.nama}</td>
+                  <td className="py-4 text-sm md:text-[15px] font-bold text-slate-800">Rp{Number(s.harga).toLocaleString("id-ID")}</td>
+                  <td className="py-4">
+                    <PillDropdown
+                      value={s.status}
+                      options={[
+                        { value: "masih", label: "Masih" },
+                        { value: "habis", label: "Habis" },
+                      ]}
+                      colorFor={(v) => (v === "masih" ? "#059669" : "#E11D48")}
+                      onChange={(v) => onUbahStockStatus(s.kode, v)}
+                    />
+                  </td>
+                  <td className="py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setBarangDiedit(s)}
+                        className="w-8 h-8 rounded-xl inline-flex items-center justify-center text-slate-600 bg-white hover:bg-slate-50 shadow-sm border border-slate-200 transition-colors cursor-pointer"
+                        title="Ubah harga"
+                      >
+                        <Pencil size={14} strokeWidth={2} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBarangDihapus(s)}
+                        className="w-8 h-8 rounded-xl inline-flex items-center justify-center text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors cursor-pointer"
+                        title="Hapus barang"
+                      >
+                        <Trash2 size={14} strokeWidth={2} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       <EditHargaModal
@@ -214,3 +206,4 @@ export default function Stock({
     </div>
   );
 }
+

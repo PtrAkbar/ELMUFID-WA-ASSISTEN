@@ -1,10 +1,15 @@
-import { statusWarna, statusLabel } from "../styles/theme";
+import { statusWarna, statusBg, statusLabel } from "../styles/theme";
 
 export default function StatusPill({ status }) {
-  const c = statusWarna[status];
+  const c = statusWarna[status] || "#64748B";
+  const bg = statusBg[status] || "#F1F5F9";
   return (
-    <span className="rounded-full" style={{ fontSize: 12, fontWeight: 600, padding: "4px 12px", color: c, background: c + "14" }}>
-      {statusLabel[status]}
+    <span
+      className="inline-flex items-center rounded-full px-3 py-1 text-xs md:text-sm font-semibold border border-black/5"
+      style={{ color: c, backgroundColor: bg }}
+    >
+      {statusLabel[status] || status}
     </span>
   );
 }
+

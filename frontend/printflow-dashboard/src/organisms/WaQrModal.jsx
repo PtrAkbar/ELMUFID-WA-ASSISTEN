@@ -1,6 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, WifiOff, CheckCircle2, X } from "lucide-react";
-import { warna } from "../styles/theme";
 import Modal from "../molecules/Modal";
 
 const pesanStatus = {
@@ -13,79 +12,85 @@ const pesanStatus = {
 
 export default function WaQrModal({ open, onClose, status, qr }) {
   return (
-    <Modal open={open} onClose={onClose}>
-      <div className="flex items-start justify-between mb-1">
-        <p style={{ fontSize: 16, fontWeight: 700, color: warna.teksUtama }}>Hubungkan WhatsApp</p>
+    <Modal open={open} onClose={onClose} width={440}>
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <p className="text-lg font-bold text-slate-900 tracking-tight">Hubungkan WhatsApp</p>
+          <p className="text-sm text-slate-500 mt-0.5 font-medium">
+            Scan QR code dengan WhatsApp di HP toko Anda
+          </p>
+        </div>
         <button
+          type="button"
           onClick={onClose}
-          className="rounded-full flex items-center justify-center"
-          style={{ width: 28, height: 28, transition: "background 0.15s ease" }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = warna.hover)}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+          className="rounded-full w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
         >
-          <X size={16} style={{ color: warna.teksSekunder }} />
+          <X size={18} />
         </button>
       </div>
-      <p style={{ fontSize: 13, color: warna.teksSekunder }} className="mb-4">
-        Buka WhatsApp di HP toko, pilih Perangkat Tertaut, lalu scan kode di bawah ini.
-      </p>
-      <div className="flex items-center justify-center rounded-2xl mb-4" style={{ background: warna.bgSekunder, border: `1px solid ${warna.garis}`, height: 260 }}>
+
+      <div className="flex items-center justify-center rounded-2xl my-5 bg-slate-50 border border-slate-100" style={{ height: 270 }}>
         <AnimatePresence mode="wait">
           {status === "qr" && qr ? (
             <motion.div
               key="qr"
-              className="flex flex-col items-center gap-2"
+              className="flex flex-col items-center gap-3.5"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
             >
-              <div className="rounded-2xl overflow-hidden" style={{ width: 200, height: 200, background: warna.kartu, border: `1px solid ${warna.garis}` }}>
+              <div className="rounded-2xl overflow-hidden p-2.5 bg-white shadow-sm border border-slate-200" style={{ width: 200, height: 200 }}>
                 <img src={qr} alt="QR WhatsApp" className="w-full h-full object-contain" />
               </div>
-              <span style={{ fontSize: 12, fontWeight: 500, color: warna.teksSekunder }}>Kode QR menunggu untuk discan</span>
+              <span className="text-xs font-semibold text-slate-600">Kode QR siap discan</span>
             </motion.div>
           ) : status === "offline" ? (
             <motion.div
               key="offline"
-              className="flex flex-col items-center gap-2 px-6 text-center"
+              className="flex flex-col items-center gap-2.5 px-6 text-center"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
             >
-              <WifiOff size={28} style={{ color: warna.teksSekunder }} />
-              <span style={{ fontSize: 12, color: warna.teksSekunder }}>
-                Server bot belum jalan. Jalankan <b>npm start</b> di folder wa-bot-percetakan.
+              <WifiOff size={32} className="text-slate-400" />
+              <span className="text-sm text-slate-500 leading-relaxed font-medium">
+                Server bot belum berjalan. Pastikan <b>npm run dev</b> aktif.
               </span>
             </motion.div>
           ) : status === "connected" ? (
             <motion.div
               key="connected"
-              className="flex flex-col items-center gap-2"
+              className="flex flex-col items-center gap-2.5"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
             >
-              <CheckCircle2 size={28} style={{ color: warna.sukses }} />
-              <span style={{ fontSize: 12, color: warna.teksSekunder }}>Berhasil terhubung!</span>
+              <CheckCircle2 size={36} className="text-emerald-500" />
+              <span className="text-sm font-bold text-emerald-600">Berhasil terhubung!</span>
             </motion.div>
           ) : (
             <motion.div
               key="loading"
-              className="flex flex-col items-center gap-2"
+              className="flex flex-col items-center gap-2.5"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
             >
-              <Loader2 size={28} className="animate-spin" style={{ color: warna.biru }} />
-              <span style={{ fontSize: 12, color: warna.teksSekunder }}>{pesanStatus[status] || "Memuat..."}</span>
+              <Loader2 size={28} className="animate-spin text-blue-600" />
+              <span className="text-sm text-slate-500 font-medium">{pesanStatus[status] || "Memuat..."}</span>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      <p className="text-xs text-slate-400 text-center leading-relaxed font-medium">
+        Buka WhatsApp &gt; Perangkat Tertaut &gt; Tautkan Perangkat
+      </p>
     </Modal>
   );
 }
+

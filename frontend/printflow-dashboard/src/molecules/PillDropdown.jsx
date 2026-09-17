@@ -1,70 +1,55 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { warna, bayangan } from "../styles/theme";
 import { dropdownMotion } from "../utils/motion";
 
 export default function PillDropdown({ value, options, colorFor, onChange }) {
   const [open, setOpen] = useState(false);
-  const current = options.find((o) => o.value === value);
+  const current = options.find((o) => o.value === value) || options[0];
   const c = colorFor(value);
 
   return (
-    <div style={{ position: "relative", display: "inline-block" }}>
+    <div className="relative inline-block">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
-        className="rounded-full flex items-center gap-1.5"
-        style={{ fontSize: 12, fontWeight: 600, padding: "6px 12px", color: c, border: `1px solid ${c}55`, background: c + "14", transition: "background 0.2s ease" }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = c + "26")}
-        onMouseLeave={(e) => (e.currentTarget.style.background = c + "14")}
+        className="rounded-full flex items-center gap-2 px-3.5 py-1.5 text-xs md:text-sm font-semibold cursor-pointer transition-all border border-black/5"
+        style={{ color: c, backgroundColor: `${c}18` }}
       >
-        {current.label}
+        <span>{current?.label}</span>
         <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}>
-          <ChevronDown size={12} />
+          <ChevronDown size={14} />
         </motion.div>
       </button>
 
       <AnimatePresence>
         {open && (
           <>
-            <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
+            <div onClick={() => setOpen(false)} className="fixed inset-0 z-10" />
             <motion.div
-              className="absolute rounded-2xl overflow-hidden"
-              style={{
-                top: "115%", left: 0, minWidth: 170, background: warna.kartu,
-                border: `1px solid ${warna.garis}`,
-                boxShadow: bayangan.dropdown, zIndex: 20, transformOrigin: "top left",
-              }}
+              className="absolute rounded-2xl overflow-hidden bg-white shadow-xl shadow-slate-900/10 z-20 origin-top-left border border-slate-100 p-2 min-w-[190px]"
+              style={{ top: "115%", left: 0 }}
               {...dropdownMotion}
             >
               {options.map((opt) => {
                 const oc = colorFor(opt.value);
                 const aktif = opt.value === value;
                 return (
-                  <div
+                  <button
                     key={opt.value}
+                    type="button"
                     onClick={() => {
                       onChange(opt.value);
                       setOpen(false);
                     }}
-                    className="cursor-pointer"
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: oc,
-                      padding: "10px 14px",
-                      background: aktif ? oc + "14" : "transparent",
-                      transition: "background 0.15s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!aktif) e.currentTarget.style.background = oc + "14";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!aktif) e.currentTarget.style.background = "transparent";
-                    }}
+                    className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold cursor-pointer transition-colors flex items-center gap-2.5 ${
+                      aktif ? "bg-slate-100" : "hover:bg-slate-50"
+                    }`}
+                    style={{ color: oc }}
                   >
-                    {opt.label}
-                  </div>
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: oc }} />
+                    <span>{opt.label}</span>
+                  </button>
                 );
               })}
             </motion.div>
@@ -74,3 +59,4 @@ export default function PillDropdown({ value, options, colorFor, onChange }) {
     </div>
   );
 }
+

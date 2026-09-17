@@ -1,14 +1,13 @@
 import { Inbox } from "lucide-react";
 
-export default function EmptyState({ pesan, tinggi = 160 }) {
+export default function EmptyState({ pesan, tinggi = 200 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2" style={{ height: tinggi }}>
-      <Inbox
-        size={28}
-        strokeWidth={1.6}
-        style={{ color: "#7B8CFF", opacity: 0.8, filter: "drop-shadow(0 0 10px rgba(123,140,255,0.45))" }}
-      />
-      <p style={{ fontSize: 13, color: "#CBD5E1" }}>{pesan}</p>
+    <div className="flex flex-col items-center justify-center gap-3 py-6" style={{ minHeight: tinggi }}>
+      <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+        <Inbox size={24} strokeWidth={2} />
+      </div>
+      <p className="text-sm text-slate-500 font-medium">{pesan}</p>
     </div>
   );
 }
+

@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { Search, RotateCcw, Trash2, Download, MessageCircle } from "lucide-react";
-import { warna, gradien, bayangan, inputStyle } from "../styles/theme";
 import { bulanTahunKey, formatBulanTahun, formatJam, toISO } from "../utils/date";
 import { formatRupiah, formatTanggal } from "../lib/orders";
 import { unduhRekapExcel } from "../utils/exportExcel";
@@ -46,39 +45,39 @@ export default function Riwayat({ orders, onRestore, onHapusSemuaRiwayat }) {
   }
 
   return (
-    <div className="rounded-3xl p-5" style={{ background: warna.kartu, border: `1px solid ${warna.garis}`, boxShadow: bayangan.kartu }}>
-      <div className="flex items-center justify-between mb-4">
-        <p style={{ fontSize: 16, fontWeight: 600, color: "#E5E7EB" }}>Riwayat order selesai</p>
-        <div className="flex items-center gap-2">
+    <div className="bg-white rounded-3xl p-7 border border-slate-200/70 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-2 border-b border-slate-100">
+        <div>
+          <p className="text-lg font-bold text-slate-900 tracking-tight">Riwayat Order Selesai</p>
+          <p className="text-sm text-slate-500 mt-0.5 font-medium">{selesai.length} pesanan telah tuntas</p>
+        </div>
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="relative">
-            <Search size={14} strokeWidth={2.3} className="absolute left-3 top-2.5" style={{ color: warna.teksSekunder }} />
+            <Search size={16} strokeWidth={2} className="absolute left-3.5 top-3 text-slate-400" />
             <input
               value={cariRiwayat}
               onChange={(e) => setCariRiwayat(e.target.value)}
-              placeholder="Cari nama customer"
-              className="rounded-full outline-none w-56"
-              style={{ ...inputStyle, fontSize: 14, padding: "8px 12px 8px 34px" }}
+              placeholder="Cari nama customer..."
+              className="rounded-xl outline-none w-64 text-sm text-slate-800 placeholder-slate-400 bg-slate-50/70 hover:bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-100 border border-slate-200 pl-10 pr-3.5 py-2.5 transition-all"
             />
           </div>
           {selesai.length > 0 && (
             <>
               <button
+                type="button"
                 onClick={handleExport}
-                className="flex items-center gap-1 rounded-full px-3 py-2"
-                style={{ fontSize: 12, fontWeight: 600, color: warna.teksSekunder, border: `1px solid ${warna.garis}`, transition: "background 0.2s ease" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = warna.hover)}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs md:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 shadow-sm border border-slate-200 transition-all cursor-pointer"
               >
-                <Download size={13} strokeWidth={2.3} /> Export Excel
+                <Download size={15} strokeWidth={2} />
+                <span>Export Excel</span>
               </button>
               <button
+                type="button"
                 onClick={() => setKonfirmasiHapusSemua(true)}
-                className="flex items-center gap-1 rounded-full px-3 py-2"
-                style={{ fontSize: 12, fontWeight: 600, color: warna.bahaya, border: `1px solid ${warna.garis}`, transition: "background 0.2s ease" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = warna.bahayaBg)}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                className="flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors cursor-pointer"
               >
-                <Trash2 size={13} strokeWidth={2.3} /> Hapus semua
+                <Trash2 size={15} strokeWidth={2} />
+                <span>Hapus Semua</span>
               </button>
             </>
           )}
@@ -86,68 +85,66 @@ export default function Riwayat({ orders, onRestore, onHapusSemuaRiwayat }) {
       </div>
 
       {kelompokBulan.length === 0 ? (
-        <EmptyState pesan={cariRiwayat ? "Riwayat tidak ditemukan" : "Belum ada order yang selesai"} />
+        <EmptyState pesan={cariRiwayat ? "Riwayat tidak ditemukan" : "Belum ada order yang selesai"} tinggi={220} />
       ) : (
         kelompokBulan.map((grup) => (
-          <div key={grup.key} className="mb-6">
-            <div className="flex items-center justify-between mb-2" style={{ borderTop: `1px solid ${warna.garis}`, paddingTop: 14 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: warna.teksUtama }}>{grup.label}</p>
-              <p style={{ fontSize: 12, fontWeight: 500, color: warna.teksSekunder }}>
+          <div key={grup.key} className="mb-8">
+            <div className="flex items-center justify-between mb-4 pt-4 border-t border-slate-100">
+              <p className="text-base font-bold text-slate-900">{grup.label}</p>
+              <span className="text-xs md:text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
                 {grup.items.length} order &middot; {formatRupiah(grup.totalOmzet)}
-              </p>
+              </span>
             </div>
-            <table className="w-full">
-              <thead>
-                <tr style={{ textAlign: "left", color: warna.teksSekunder, borderBottom: `1px solid ${warna.garis}` }}>
-                  <th style={{ fontSize: 12, fontWeight: 600, padding: "8px 0" }}>Aktivitas</th>
-                  <th style={{ fontSize: 12, fontWeight: 600, padding: "8px 0" }}>Order ID</th>
-                  <th style={{ fontSize: 12, fontWeight: 600, padding: "8px 0" }}>Tanggal selesai</th>
-                  <th style={{ fontSize: 12, fontWeight: 600, padding: "8px 0" }}>Jam selesai</th>
-                  <th style={{ fontSize: 12, fontWeight: 600, padding: "8px 0" }}>Harga</th>
-                  <th style={{ fontSize: 12, fontWeight: 600, padding: "8px 0", textAlign: "right" }}>Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {grup.items.map((o) => (
-                  <tr
-                    key={o.id}
-                    style={{ borderBottom: `1px solid ${warna.divider}`, transition: "background 0.15s ease" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                  >
-                    <td style={{ fontSize: 14, fontWeight: 700, padding: "12px 0", color: warna.teksUtama }}>{o.detail}</td>
-                    <td style={{ fontSize: 14, fontWeight: 400, color: warna.teksSekunder, padding: "12px 0" }}>{o.kode}</td>
-                    <td style={{ fontSize: 14, fontWeight: 400, color: warna.teksSekunder, padding: "12px 0" }}>{o.tanggalSelesai}</td>
-                    <td style={{ fontSize: 14, fontWeight: 400, color: warna.teksSekunder, padding: "12px 0" }}>{o.jamSelesai}</td>
-                    <td style={{ fontSize: 14, fontWeight: 600, padding: "12px 0", color: warna.teksUtama }}>{o.totalFormatted}</td>
-                    <td style={{ padding: "12px 0", textAlign: "right" }}>
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => bukaWA(o.nomor, o.detail)}
-                          className="flex items-center gap-1 rounded-full px-3 py-1.5"
-                          style={{ fontSize: 12, fontWeight: 600, color: warna.teksSekunder, border: `1px solid ${warna.garis}`, transition: "background 0.2s ease" }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = warna.hover)}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                          title="Chat WA customer"
-                        >
-                          <MessageCircle size={13} strokeWidth={2.3} /> Chat WA
-                        </button>
-                        <button
-                          onClick={() => onRestore(o.id)}
-                          className="inline-flex items-center gap-1 rounded-full px-3 py-1.5"
-                          style={{ fontSize: 12, fontWeight: 600, color: "#FFFFFF", background: gradien.aksenTombol, boxShadow: bayangan.glowKecil, transition: "filter 0.2s ease" }}
-                          onMouseEnter={(e) => (e.currentTarget.style.filter = "brightness(1.12)")}
-                          onMouseLeave={(e) => (e.currentTarget.style.filter = "brightness(1)")}
-                          title="Kembalikan ke order (sedang diproses)"
-                        >
-                          <RotateCcw size={13} strokeWidth={2.3} /> Restore
-                        </button>
-                      </div>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <th className="py-3.5 font-bold">Aktivitas</th>
+                    <th className="py-3.5 font-bold">Order ID</th>
+                    <th className="py-3.5 font-bold">Tanggal Selesai</th>
+                    <th className="py-3.5 font-bold">Jam</th>
+                    <th className="py-3.5 font-bold">Harga</th>
+                    <th className="py-3.5 font-bold text-right">Aksi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {grup.items.map((o) => (
+                    <tr
+                      key={o.id}
+                      className="hover:bg-slate-50/80 transition-colors"
+                    >
+                      <td className="py-4 text-sm font-bold text-slate-900">{o.detail}</td>
+                      <td className="py-4 text-sm text-slate-500 font-mono font-medium">{o.kode}</td>
+                      <td className="py-4 text-sm text-slate-600 font-medium">{o.tanggalSelesai}</td>
+                      <td className="py-4 text-sm text-slate-500">{o.jamSelesai}</td>
+                      <td className="py-4 text-sm md:text-[15px] font-bold text-emerald-600">{o.totalFormatted}</td>
+                      <td className="py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => bukaWA(o.nomor, o.detail)}
+                            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 shadow-sm border border-slate-200 transition-all cursor-pointer"
+                            title="Chat WA customer"
+                          >
+                            <MessageCircle size={14} strokeWidth={2.2} className="text-emerald-600" />
+                            <span>WA</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onRestore(o.id)}
+                            className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs md:text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 shadow-sm transition-all cursor-pointer"
+                            title="Kembalikan ke order aktif"
+                          >
+                            <RotateCcw size={14} strokeWidth={2.2} />
+                            <span>Restore</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ))
       )}
@@ -163,3 +160,4 @@ export default function Riwayat({ orders, onRestore, onHapusSemuaRiwayat }) {
     </div>
   );
 }
+

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { warna, gradien, bayangan } from "../styles/theme";
 import Modal from "../molecules/Modal";
 
 export default function OrderFormModal({ open, onClose, onSubmit }) {
@@ -30,44 +29,42 @@ export default function OrderFormModal({ open, onClose, onSubmit }) {
   }
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <p style={{ fontSize: 16, fontWeight: 700, color: warna.teksUtama }} className="mb-4">Order baru</p>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <Modal open={open} onClose={onClose} width={460}>
+      <p className="text-lg font-bold text-slate-900 tracking-tight mb-1">Order Baru</p>
+      <p className="text-sm text-slate-500 mb-5">Masukkan informasi pesanan baru pelanggan</p>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
-          <label style={{ fontSize: 12, fontWeight: 600, color: warna.teksSekunder }}>Nama customer</label>
+          <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Nama Customer</label>
           <input
             required
             value={nama}
             onChange={(e) => setNama(e.target.value)}
-            placeholder="Rina Kartika"
-            className="w-full rounded-2xl outline-none mt-1"
-            style={{ border: `1px solid ${warna.garis}`, background: warna.bgSekunder, color: warna.teksUtama, fontSize: 14, padding: "10px 14px" }}
+            placeholder="Contoh: Rina Kartika"
+            className="w-full rounded-xl bg-slate-50/80 border border-slate-200 text-sm text-slate-900 placeholder-slate-400 px-4 py-2.5 mt-1.5 outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
           />
         </div>
         <div>
-          <label style={{ fontSize: 12, fontWeight: 600, color: warna.teksSekunder }}>Nomor WA</label>
+          <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Nomor WA Customer</label>
           <input
             required
             value={nomor}
             onChange={(e) => setNomor(e.target.value)}
             placeholder="62812xxxxxxx"
-            className="w-full rounded-2xl outline-none mt-1"
-            style={{ border: `1px solid ${warna.garis}`, background: warna.bgSekunder, color: warna.teksUtama, fontSize: 14, padding: "10px 14px" }}
+            className="w-full rounded-xl bg-slate-50/80 border border-slate-200 text-sm text-slate-900 placeholder-slate-400 px-4 py-2.5 mt-1.5 outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
           />
         </div>
         <div>
-          <label style={{ fontSize: 12, fontWeight: 600, color: warna.teksSekunder }}>Detail order</label>
+          <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Detail Order</label>
           <input
             required
             value={detail}
             onChange={(e) => setDetail(e.target.value)}
             placeholder="Print A4 200 lembar, jilid spiral"
-            className="w-full rounded-2xl outline-none mt-1"
-            style={{ border: `1px solid ${warna.garis}`, background: warna.bgSekunder, color: warna.teksUtama, fontSize: 14, padding: "10px 14px" }}
+            className="w-full rounded-xl bg-slate-50/80 border border-slate-200 text-sm text-slate-900 placeholder-slate-400 px-4 py-2.5 mt-1.5 outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
           />
         </div>
         <div>
-          <label style={{ fontSize: 12, fontWeight: 600, color: warna.teksSekunder }}>Total (Rp)</label>
+          <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Total Harga (Rp)</label>
           <input
             required
             type="number"
@@ -75,24 +72,21 @@ export default function OrderFormModal({ open, onClose, onSubmit }) {
             value={total}
             onChange={(e) => setTotal(e.target.value)}
             placeholder="75000"
-            className="w-full rounded-2xl outline-none mt-1"
-            style={{ border: `1px solid ${warna.garis}`, background: warna.bgSekunder, color: warna.teksUtama, fontSize: 14, padding: "10px 14px" }}
+            className="w-full rounded-xl bg-slate-50/80 border border-slate-200 text-sm text-slate-900 placeholder-slate-400 px-4 py-2.5 mt-1.5 outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
           />
         </div>
 
-        {pesan && <p style={{ fontSize: 12, color: warna.bahaya }}>{pesan}</p>}
+        {pesan && <p className="text-xs text-rose-600 font-medium">{pesan}</p>}
 
         <button
           type="submit"
           disabled={menyimpan}
-          className="w-full text-white rounded-full py-2.5 mt-1"
-          style={{ background: gradien.aksenTombol, boxShadow: bayangan.glowKecil, fontSize: 14, fontWeight: 600, opacity: menyimpan ? 0.6 : 1, transition: "filter 0.2s ease" }}
-          onMouseEnter={(e) => !menyimpan && (e.currentTarget.style.filter = "brightness(1.12)")}
-          onMouseLeave={(e) => (e.currentTarget.style.filter = "brightness(1)")}
+          className="w-full text-white bg-blue-600 hover:bg-blue-700 rounded-xl py-3 mt-2 text-sm font-semibold transition-all cursor-pointer shadow-md shadow-blue-500/20 disabled:opacity-50"
         >
-          {menyimpan ? "Menyimpan..." : "Simpan order"}
+          {menyimpan ? "Menyimpan..." : "Simpan Order"}
         </button>
       </form>
     </Modal>
   );
 }
+

@@ -1,14 +1,29 @@
-import { warna, gradien, bayangan } from "../styles/theme";
-
-export default function StatCard({ icon, label, value, note }) {
+export default function StatCard({ label, value, note, bg = "#EFF6FF", icon, iconColor = "text-blue-600", iconBg = "bg-white" }) {
   return (
-    <div className="kartu-hover rounded-3xl p-4" style={{ background: warna.kartu, border: `1px solid ${warna.garis}`, boxShadow: bayangan.kartu }}>
-      <div className="w-10 h-10 rounded-full flex items-center justify-center mb-4" style={{ background: gradien.aksenIkon, boxShadow: bayangan.glow }}>
-        {icon}
+    <div
+      className="rounded-3xl p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default flex flex-col justify-between border border-slate-200/60 shadow-sm relative overflow-hidden"
+      style={{ backgroundColor: bg }}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm font-bold text-slate-800 tracking-tight">{label}</p>
+        {icon && (
+          <div className={`w-10 h-10 rounded-2xl ${iconBg} ${iconColor} flex items-center justify-center shadow-sm shrink-0`}>
+            {icon}
+          </div>
+        )}
       </div>
-      <p style={{ fontSize: 14, fontWeight: 400, color: "#94A3B8" }}>{label}</p>
-      <p style={{ fontSize: 42, fontWeight: 700, color: "#FFFFFF", lineHeight: 1.1 }} className="mt-1">{value}</p>
-      <p style={{ fontSize: 13, fontWeight: 400, color: "#94A3B8" }} className="mt-1">{note}</p>
+      <div>
+        <div className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight leading-none mb-2">
+          {value}
+        </div>
+        {note && (
+          <div className="text-xs md:text-sm font-semibold text-slate-600 flex items-center gap-1.5">
+            {note}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
+

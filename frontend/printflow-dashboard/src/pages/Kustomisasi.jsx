@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
-import { Trash2, Upload, Image as ImageIcon } from "lucide-react";
-import { warna, gradien, bayangan, inputStyle } from "../styles/theme";
+import { Trash2, Upload, Image as ImageIcon, Plus } from "lucide-react";
 import EmptyState from "../atoms/EmptyState";
 import ConfirmModal from "../organisms/ConfirmModal";
 
@@ -45,34 +44,41 @@ export default function Kustomisasi({ qris, rekeningList, loading, onUploadQris,
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="rounded-3xl p-5" style={{ background: warna.kartu, border: `1px solid ${warna.garis}`, boxShadow: bayangan.kartu }}>
-        <p style={{ fontSize: 16, fontWeight: 600, color: "#E5E7EB" }} className="mb-1">QRIS toko</p>
-        <p style={{ fontSize: 13, color: warna.teksSekunder }} className="mb-4">
-          Gambar ini otomatis dikirim bot ke customer yang memilih bayar pakai QRIS.
+    <div className="flex flex-col gap-8">
+      {/* QRIS Card */}
+      <div className="bg-white rounded-3xl p-7 border border-slate-200/70 shadow-sm">
+        <p className="text-lg font-bold text-slate-900 tracking-tight">QRIS Toko</p>
+        <p className="text-sm text-slate-500 mt-0.5 mb-5 font-medium">
+          Gambar ini otomatis dikirim bot ke customer yang memilih metode QRIS.
         </p>
 
         {loading ? (
-          <EmptyState pesan="Memuat data..." />
+          <EmptyState pesan="Memuat data..." tinggi={160} />
         ) : qris ? (
-          <div className="flex items-start gap-4">
-            <img src={qris} alt="QRIS toko" className="rounded-2xl" style={{ width: 160, height: 160, objectFit: "cover", border: `1px solid ${warna.garis}` }} />
-            <div className="flex flex-col gap-2">
+          <div className="flex items-start gap-5 flex-wrap">
+            <img
+              src={qris}
+              alt="QRIS toko"
+              className="rounded-2xl w-44 h-44 object-cover shadow-sm bg-white p-2 border border-slate-200/70"
+            />
+            <div className="flex flex-col gap-2.5">
               <input ref={inputFileRef} type="file" accept="image/*" className="hidden" onChange={handlePilihFileQris} />
               <button
+                type="button"
                 onClick={() => inputFileRef.current?.click()}
                 disabled={mengupload}
-                className="flex items-center gap-1 rounded-full px-3 py-2"
-                style={{ fontSize: 12, fontWeight: 600, color: warna.teksSekunder, border: `1px solid ${warna.garis}`, opacity: mengupload ? 0.6 : 1 }}
+                className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs md:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 shadow-sm border border-slate-200 transition-all cursor-pointer disabled:opacity-50"
               >
-                <Upload size={13} strokeWidth={2.3} /> {mengupload ? "Mengupload..." : "Ganti gambar"}
+                <Upload size={15} strokeWidth={2} />
+                <span>{mengupload ? "Mengupload..." : "Ganti Gambar"}</span>
               </button>
               <button
+                type="button"
                 onClick={() => setKonfirmasiHapusQris(true)}
-                className="flex items-center gap-1 rounded-full px-3 py-2"
-                style={{ fontSize: 12, fontWeight: 600, color: warna.bahaya, border: `1px solid ${warna.garis}` }}
+                className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs md:text-sm font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors cursor-pointer"
               >
-                <Trash2 size={13} strokeWidth={2.3} /> Hapus QRIS
+                <Trash2 size={15} strokeWidth={2} />
+                <span>Hapus QRIS</span>
               </button>
             </div>
           </div>
@@ -80,100 +86,104 @@ export default function Kustomisasi({ qris, rekeningList, loading, onUploadQris,
           <div>
             <input ref={inputFileRef} type="file" accept="image/*" className="hidden" onChange={handlePilihFileQris} />
             <button
+              type="button"
               onClick={() => inputFileRef.current?.click()}
               disabled={mengupload}
-              className="flex items-center gap-2 rounded-2xl p-6 w-full justify-center"
-              style={{ border: `1px dashed ${warna.garis}`, color: warna.teksSekunder, fontSize: 13, fontWeight: 600, opacity: mengupload ? 0.6 : 1 }}
+              className="flex flex-col items-center gap-3 rounded-2xl p-10 w-full justify-center bg-slate-50/60 border-2 border-dashed border-slate-200 hover:border-blue-400 hover:bg-blue-50/20 transition-all cursor-pointer disabled:opacity-50"
             >
-              <ImageIcon size={16} strokeWidth={2.3} /> {mengupload ? "Mengupload..." : "Upload gambar QRIS"}
+              <ImageIcon size={28} className="text-slate-400" />
+              <span className="text-sm font-semibold text-slate-700">
+                {mengupload ? "Mengupload..." : "Klik untuk upload gambar QRIS"}
+              </span>
             </button>
           </div>
         )}
 
-        {pesanError && <p style={{ fontSize: 12, color: warna.bahaya }} className="mt-3">{pesanError}</p>}
+        {pesanError && <p className="text-sm text-rose-600 font-medium mt-3">{pesanError}</p>}
       </div>
 
-      <div className="rounded-3xl p-5" style={{ background: warna.kartu, border: `1px solid ${warna.garis}`, boxShadow: bayangan.kartu }}>
-        <p style={{ fontSize: 16, fontWeight: 600, color: "#E5E7EB" }} className="mb-1">Rekening bank toko</p>
-        <p style={{ fontSize: 13, color: warna.teksSekunder }} className="mb-4">
-          Bot akan menawarkan transfer ke salah satu rekening ini kalau customer memilih metode transfer. Boleh lebih dari satu.
+      {/* Rekening Bank Card */}
+      <div className="bg-white rounded-3xl p-7 border border-slate-200/70 shadow-sm">
+        <p className="text-lg font-bold text-slate-900 tracking-tight">Rekening Bank Toko</p>
+        <p className="text-sm text-slate-500 mt-0.5 mb-5 font-medium">
+          Bot akan menawarkan rekening ini bila customer memilih transfer bank manual.
         </p>
 
-        <div className="flex items-end gap-2 mb-5 rounded-3xl p-4 flex-wrap" style={{ background: warna.bg }}>
-          <div className="flex-1" style={{ minWidth: 140 }}>
-            <label style={{ fontSize: 12, fontWeight: 600, color: warna.teksSekunder }}>Nama bank</label>
+        <div className="bg-slate-50/80 rounded-2xl p-5 mb-6 border border-slate-200/70 flex items-end gap-3.5 flex-wrap">
+          <div className="flex-1 min-w-[160px]">
+            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Nama Bank</label>
             <input
               value={namaBank}
               onChange={(e) => setNamaBank(e.target.value)}
-              placeholder="BCA"
-              className="w-full rounded-2xl outline-none mt-1"
-              style={{ ...inputStyle, background: warna.kartu, fontSize: 14, padding: "8px 12px" }}
+              placeholder="BCA / Mandiri / BNI"
+              className="w-full rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 px-4 py-2.5 mt-1.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
             />
           </div>
-          <div className="flex-1" style={{ minWidth: 160 }}>
-            <label style={{ fontSize: 12, fontWeight: 600, color: warna.teksSekunder }}>Nomor rekening</label>
+          <div className="flex-1 min-w-[180px]">
+            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Nomor Rekening</label>
             <input
               value={nomorRekening}
               onChange={(e) => setNomorRekening(e.target.value)}
               placeholder="1234567890"
-              className="w-full rounded-2xl outline-none mt-1"
-              style={{ ...inputStyle, background: warna.kartu, fontSize: 14, padding: "8px 12px" }}
+              className="w-full rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 px-4 py-2.5 mt-1.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
             />
           </div>
-          <div className="flex-1" style={{ minWidth: 160 }}>
-            <label style={{ fontSize: 12, fontWeight: 600, color: warna.teksSekunder }}>Atas nama (opsional)</label>
+          <div className="flex-1 min-w-[180px]">
+            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Atas Nama (opsional)</label>
             <input
               value={atasNama}
               onChange={(e) => setAtasNama(e.target.value)}
               placeholder="EL-MUFID"
-              className="w-full rounded-2xl outline-none mt-1"
-              style={{ ...inputStyle, background: warna.kartu, fontSize: 14, padding: "8px 12px" }}
+              className="w-full rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 px-4 py-2.5 mt-1.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
             />
           </div>
           <button
+            type="button"
             onClick={handleTambahRekening}
             disabled={menyimpanRekening}
-            className="text-white rounded-full px-4 py-2.5"
-            style={{ background: gradien.aksenTombol, boxShadow: bayangan.glowKecil, fontSize: 12, fontWeight: 600, opacity: menyimpanRekening ? 0.6 : 1 }}
+            className="flex items-center gap-2 text-white bg-blue-600 hover:bg-blue-700 rounded-xl px-5 py-2.5 text-sm font-semibold shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50 shrink-0"
           >
-            {menyimpanRekening ? "Menyimpan..." : "+ Tambah rekening"}
+            <Plus size={16} strokeWidth={2.5} />
+            <span>{menyimpanRekening ? "Menyimpan..." : "Tambah Rekening"}</span>
           </button>
         </div>
 
         {loading ? (
-          <EmptyState pesan="Memuat data..." />
+          <EmptyState pesan="Memuat data..." tinggi={160} />
         ) : rekeningList.length === 0 ? (
-          <EmptyState pesan="Belum ada rekening ditambahkan" />
+          <EmptyState pesan="Belum ada rekening bank yang ditambahkan" tinggi={160} />
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr style={{ textAlign: "left", color: warna.teksSekunder, borderBottom: `1px solid ${warna.garis}` }}>
-                <th style={{ fontSize: 12, fontWeight: 600, padding: "8px 0" }}>Bank</th>
-                <th style={{ fontSize: 12, fontWeight: 600, padding: "8px 0" }}>Nomor rekening</th>
-                <th style={{ fontSize: 12, fontWeight: 600, padding: "8px 0" }}>Atas nama</th>
-                <th style={{ fontSize: 12, fontWeight: 600, padding: "8px 0", textAlign: "right" }}>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rekeningList.map((r) => (
-                <tr key={r.id} style={{ borderBottom: `1px solid ${warna.divider}` }}>
-                  <td style={{ fontSize: 14, fontWeight: 700, padding: "12px 0", color: warna.teksUtama }}>{r.nama_bank}</td>
-                  <td style={{ fontSize: 14, padding: "12px 0", color: warna.teksUtama }}>{r.nomor_rekening}</td>
-                  <td style={{ fontSize: 14, padding: "12px 0", color: warna.teksSekunder }}>{r.atas_nama || "-"}</td>
-                  <td style={{ padding: "12px 0", textAlign: "right" }}>
-                    <button
-                      onClick={() => setRekeningDihapus(r)}
-                      className="rounded-full inline-flex items-center justify-center"
-                      style={{ width: 32, height: 32, color: warna.bahaya, border: `1px solid ${warna.garis}` }}
-                      title="Hapus rekening"
-                    >
-                      <Trash2 size={14} strokeWidth={2.3} />
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <th className="py-3.5 font-bold">Bank</th>
+                  <th className="py-3.5 font-bold">Nomor Rekening</th>
+                  <th className="py-3.5 font-bold">Atas Nama</th>
+                  <th className="py-3.5 font-bold text-right">Aksi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {rekeningList.map((r) => (
+                  <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-4 text-sm font-bold text-slate-900">{r.nama_bank}</td>
+                    <td className="py-4 text-sm font-mono text-blue-600 font-semibold">{r.nomor_rekening}</td>
+                    <td className="py-4 text-sm text-slate-600 font-medium">{r.atas_nama || "-"}</td>
+                    <td className="py-4 text-right">
+                      <button
+                        type="button"
+                        onClick={() => setRekeningDihapus(r)}
+                        className="w-8 h-8 rounded-xl inline-flex items-center justify-center text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors cursor-pointer"
+                        title="Hapus rekening"
+                      >
+                        <Trash2 size={14} strokeWidth={2} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -182,7 +192,7 @@ export default function Kustomisasi({ qris, rekeningList, loading, onUploadQris,
         onClose={() => setKonfirmasiHapusQris(false)}
         onConfirm={onHapusQris}
         judul="Hapus gambar QRIS?"
-        pesan="Bot gak akan bisa nawarin pembayaran QRIS sampai gambar baru diupload lagi."
+        pesan="Bot tidak akan bisa menawarkan metode QRIS hingga gambar baru diunggah."
       />
 
       <ConfirmModal
@@ -190,8 +200,9 @@ export default function Kustomisasi({ qris, rekeningList, loading, onUploadQris,
         onClose={() => setRekeningDihapus(null)}
         onConfirm={() => onHapusRekening(rekeningDihapus.id)}
         judul="Hapus rekening ini?"
-        pesan={`Rekening ${rekeningDihapus?.nama_bank} akan dihapus dari daftar.`}
+        pesan={`Rekening ${rekeningDihapus?.nama_bank} (${rekeningDihapus?.nomor_rekening}) akan dihapus.`}
       />
     </div>
   );
 }
+

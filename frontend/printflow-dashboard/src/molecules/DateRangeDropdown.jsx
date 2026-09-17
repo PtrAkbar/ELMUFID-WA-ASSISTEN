@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
-import { warna, gradien, bayangan } from "../styles/theme";
 import { dropdownMotion } from "../utils/motion";
 import { namaBulan, namaHariSingkat, formatTgl, startOfDay, addDays, isSameDay } from "../utils/date";
 
@@ -36,7 +35,7 @@ export default function DateRangeDropdown({ awal, akhir, label, onTerapkan }) {
       setPilihAkhir(akhir);
       setBulanTampil(startOfDay(akhir || new Date()));
     }
-  }, [open]);
+  }, [open, awal, akhir]);
 
   function pilihPreset(p) {
     const baru = { awal: startOfDay(addDays(new Date(), -(p.hari - 1))), akhir: startOfDay(new Date()) };
@@ -68,115 +67,94 @@ export default function DateRangeDropdown({ awal, akhir, label, onTerapkan }) {
   const grid = ambilGridBulan(bulanTampil);
 
   return (
-    <div style={{ position: "relative" }}>
+    <div className="relative">
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 rounded-full px-3 py-1.5"
-        style={{ fontSize: 12, fontWeight: 600, border: `1px solid ${warna.garis}`, color: warna.teksSekunder, background: "transparent", transition: "background 0.2s ease" }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = warna.hover)}
-        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+        className="flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs md:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200/80 shadow-sm transition-all cursor-pointer"
       >
-        <Calendar size={13} strokeWidth={2.3} />
-        {label}
+        <Calendar size={15} strokeWidth={2.2} className="text-blue-600" />
+        <span>{label}</span>
         <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}>
-          <ChevronDown size={13} />
+          <ChevronDown size={15} className="text-slate-400" />
         </motion.div>
       </button>
 
       <AnimatePresence>
         {open && (
           <>
-            <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
+            <div onClick={() => setOpen(false)} className="fixed inset-0 z-10" />
             <motion.div
-              className="absolute rounded-2xl overflow-hidden flex"
-              style={{
-                top: "125%", right: 0, background: warna.kartu,
-                border: `1px solid ${warna.garis}`,
-                boxShadow: bayangan.dropdown, zIndex: 20, transformOrigin: "top right", width: 420,
-              }}
+              className="absolute rounded-2xl overflow-hidden flex bg-white shadow-xl shadow-black/10 z-20 origin-top-right border border-black/[0.04]"
+              style={{ top: "125%", right: 0, width: 420 }}
               {...dropdownMotion}
             >
-              <div className="flex flex-col gap-1 p-3" style={{ width: 150, borderRight: `1px solid ${warna.divider}` }}>
+              <div className="flex flex-col gap-1 p-3 border-r border-black/[0.05]" style={{ width: 150 }}>
                 {preset.map((p) => (
-                  <div
+                  <button
                     key={p.label}
+                    type="button"
                     onClick={() => pilihPreset(p)}
-                    className="cursor-pointer rounded-xl"
-                    style={{ fontSize: 13, fontWeight: 600, color: warna.teksUtama, padding: "9px 10px", transition: "background 0.15s ease" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = warna.hover)}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    className="cursor-pointer rounded-xl text-left text-[13px] font-medium text-[#1C1C1C] px-2.5 py-2 hover:bg-black/[0.04] transition-colors"
                   >
                     {p.label}
-                  </div>
+                  </button>
                 ))}
-                <p style={{ fontSize: 11, color: warna.teksTersier, padding: "10px 10px 2px" }}>
-                  Atau pilih tanggal, tahan Shift untuk memilih rentang
+                <p className="text-[11px] text-gray-400 px-2.5 pt-2">
+                  Tahan Shift untuk memilih rentang
                 </p>
               </div>
 
-              <div className="p-3" style={{ width: 270 }}>
-                <div className="flex items-center justify-between mb-2 px-1">
+              <div className="p-4" style={{ width: 270 }}>
+                <div className="flex items-center justify-between mb-3 px-1">
                   <button
+                    type="button"
                     onClick={() => setBulanTampil(new Date(bulanTampil.getFullYear(), bulanTampil.getMonth() - 1, 1))}
-                    className="rounded-full flex items-center justify-center"
-                    style={{ width: 26, height: 26, color: warna.teksSekunder, transition: "background 0.15s ease" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = warna.hover)}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    className="rounded-full flex items-center justify-center w-7 h-7 text-gray-500 hover:bg-black/[0.05] transition-colors"
                   >
                     <ChevronLeft size={15} />
                   </button>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: warna.teksUtama }}>
+                  <p className="text-[13px] font-semibold text-[#1C1C1C]">
                     {namaBulan[bulanTampil.getMonth()]} {bulanTampil.getFullYear()}
                   </p>
                   <button
+                    type="button"
                     onClick={() => setBulanTampil(new Date(bulanTampil.getFullYear(), bulanTampil.getMonth() + 1, 1))}
-                    className="rounded-full flex items-center justify-center"
-                    style={{ width: 26, height: 26, color: warna.teksSekunder, transition: "background 0.15s ease" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = warna.hover)}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    className="rounded-full flex items-center justify-center w-7 h-7 text-gray-500 hover:bg-black/[0.05] transition-colors"
                   >
                     <ChevronRight size={15} />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-7 mb-1">
+                <div className="grid grid-cols-7 mb-1 text-center">
                   {namaHariSingkat.map((h) => (
-                    <div key={h} className="flex items-center justify-center" style={{ fontSize: 10, fontWeight: 600, color: warna.teksTersier, height: 24 }}>
+                    <div key={h} className="text-[10px] font-semibold text-gray-400 h-6 flex items-center justify-center">
                       {h}
                     </div>
                   ))}
                 </div>
 
-                <div className="grid grid-cols-7">
+                <div className="grid grid-cols-7 gap-y-1">
                   {grid.map((tgl, i) => {
-                    if (!tgl) return <div key={i} style={{ height: 30 }} />;
+                    if (!tgl) return <div key={i} className="h-7" />;
                     const nonaktif = tgl > hariIni;
                     const diDalamRentang = min && max && tgl >= min && tgl <= max;
                     const ujung = (min && isSameDay(tgl, min)) || (max && isSameDay(tgl, max));
                     return (
-                      <div key={i} className="flex items-center justify-center" style={{ height: 30 }}>
+                      <div key={i} className="flex items-center justify-center h-7">
                         <button
+                          type="button"
                           disabled={nonaktif}
                           onClick={(e) => klikTanggal(tgl, e)}
-                          className="rounded-full flex items-center justify-center"
-                          style={{
-                            width: 26,
-                            height: 26,
-                            fontSize: 12,
-                            fontWeight: ujung ? 700 : 500,
-                            cursor: nonaktif ? "default" : "pointer",
-                            color: nonaktif ? warna.teksTersier : ujung ? "#FFFFFF" : diDalamRentang ? warna.teksUtama : warna.teksSekunder,
-                            background: ujung ? gradien.aksen : diDalamRentang ? warna.pucat : "transparent",
-                            opacity: nonaktif ? 0.35 : 1,
-                            boxShadow: ujung ? bayangan.glowKecil : "none",
-                            transition: "background 0.15s ease",
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!nonaktif && !ujung) e.currentTarget.style.background = warna.hover;
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!nonaktif && !ujung) e.currentTarget.style.background = diDalamRentang ? warna.pucat : "transparent";
-                          }}
+                          className={`w-7 h-7 rounded-full text-xs font-medium flex items-center justify-center transition-all ${
+                            nonaktif
+                              ? "opacity-30 cursor-default text-gray-400"
+                              : ujung
+                              ? "bg-[#1C1C1C] text-white font-bold"
+                              : diDalamRentang
+                              ? "bg-[#E5ECF6] text-[#1C1C1C]"
+                              : "text-gray-700 hover:bg-black/[0.05]"
+                          }`}
                         >
                           {tgl.getDate()}
                         </button>
@@ -186,11 +164,9 @@ export default function DateRangeDropdown({ awal, akhir, label, onTerapkan }) {
                 </div>
 
                 <button
+                  type="button"
                   onClick={terapkanRentang}
-                  className="w-full rounded-full mt-3 py-2"
-                  style={{ fontSize: 12, fontWeight: 700, color: "#FFFFFF", background: gradien.aksenTombol, boxShadow: bayangan.glowKecil, transition: "filter 0.2s ease" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.filter = "brightness(1.12)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.filter = "brightness(1)")}
+                  className="w-full rounded-xl mt-3 py-2 text-xs font-semibold text-white bg-[#1C1C1C] hover:bg-black transition-all shadow-sm cursor-pointer"
                 >
                   Terapkan
                 </button>
@@ -202,3 +178,4 @@ export default function DateRangeDropdown({ awal, akhir, label, onTerapkan }) {
     </div>
   );
 }
+

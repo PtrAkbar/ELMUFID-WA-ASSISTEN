@@ -18,47 +18,80 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let initialDone = false;
+    let aktif = true;
 
     async function ambilSesiDariHandoff() {
-      const hash = window.location.hash;
-      if (!hash.includes("access_token")) return;
+      try {
+        const hash = window.location.hash;
+        if (!hash.includes("access_token")) return;
 
-      const params = new URLSearchParams(hash.slice(1));
-      const access_token = params.get("access_token");
-      const refresh_token = params.get("refresh_token");
-      if (access_token && refresh_token) {
-        await supabase.auth.setSession({ access_token, refresh_token });
+        const params = new URLSearchParams(hash.slice(1));
+        const access_token = params.get("access_token");
+        const refresh_token = params.get("refresh_token");
+        if (access_token && refresh_token) {
+          await supabase.auth.setSession({ access_token, refresh_token });
+        }
+        window.history.replaceState(null, "", window.location.pathname);
+      } catch (e) {
+        console.warn("Gagal set session dari handoff:", e);
       }
-      window.history.replaceState(null, "", window.location.pathname);
     }
 
     async function initSesi() {
-      await ambilSesiDariHandoff();
+      try {
+        await ambilSesiDariHandoff();
 
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      setMemuat(false);
-      initialDone = true;
+        const getSessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((resolve) =>
+          setTimeout(() => resolve({ data: { session: null }, error: new Error("Session timeout") }), 3000)
+        );
 
-      if (!data.session) {
-        keLogin();
+        const { data } = await Promise.race([getSessionPromise, timeoutPromise]);
+        if (aktif) {
+          setSession(data?.session ?? null);
+          initialDone = true;
+
+          if (!data?.session) {
+            keLogin();
+          }
+        }
+      } catch (err) {
+        console.error("Gagal memeriksa sesi dashboard:", err);
+        if (aktif) {
+          setSession(null);
+          initialDone = true;
+          keLogin();
+        }
+      } finally {
+        if (aktif) {
+          setMemuat(false);
+        }
       }
     }
 
     initSesi();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, sesiBaru) => {
-      setSession(sesiBaru);
-      if (initialDone && !sesiBaru) {
-        keLogin();
+      if (aktif) {
+        setSession(sesiBaru);
+        if (initialDone && !sesiBaru) {
+          keLogin();
+        }
       }
     });
 
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      aktif = false;
+      listener?.subscription?.unsubscribe?.();
+    };
   }, []);
 
   async function logout() {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } catch (e) {
+      console.warn("Logout error:", e);
+    }
     keLogin();
   }
 

@@ -13,17 +13,27 @@ export default function EmailForm({ onTerkirim }) {
     setMemproses(true);
     setPesan("");
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin },
-    });
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.origin },
+      });
 
-    setMemproses(false);
-    if (error) {
-      setPesan(error.message);
-      return;
+      if (error) {
+        setPesan(error.message);
+        return;
+      }
+      onTerkirim(email);
+    } catch (err) {
+      console.error("Gagal mengirim OTP:", err);
+      setPesan(
+        err?.message?.includes("fetch") || err?.message?.includes("Failed")
+          ? "Gagal terhubung ke Supabase. Pastikan internet aktif dan database Supabase aktif."
+          : (err?.message || "Terjadi kesalahan saat mengirim OTP.")
+      );
+    } finally {
+      setMemproses(false);
     }
-    onTerkirim(email);
   }
 
   return (

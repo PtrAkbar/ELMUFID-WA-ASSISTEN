@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { warna } from "../styles/theme";
 
@@ -13,18 +14,34 @@ function GoogleIcon() {
 }
 
 export default function GoogleButton() {
+  const [pesan, setPesan] = useState("");
+
   async function masukGoogle() {
-    await supabase.auth.signInWithOAuth({ provider: "google" });
+    setPesan("");
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+      if (error) setPesan(error.message);
+    } catch (err) {
+      console.error("Gagal login Google:", err);
+      setPesan(
+        err?.message?.includes("fetch") || err?.message?.includes("Failed")
+          ? "Gagal terhubung ke Supabase. Pastikan database Supabase aktif."
+          : (err?.message || "Gagal masuk lewat Google.")
+      );
+    }
   }
 
   return (
-    <button
-      onClick={masukGoogle}
-      className="w-full flex items-center justify-center gap-2 rounded-full py-2.5"
-      style={{ border: `1px solid ${warna.garis}`, fontSize: 14, fontWeight: 600, color: warna.teksUtama }}
-    >
-      <GoogleIcon />
-      Masuk dengan Google
-    </button>
+    <div>
+      <button
+        onClick={masukGoogle}
+        className="w-full flex items-center justify-center gap-2 rounded-full py-2.5"
+        style={{ border: `1px solid ${warna.garis}`, fontSize: 14, fontWeight: 600, color: warna.teksUtama }}
+      >
+        <GoogleIcon />
+        Masuk dengan Google
+      </button>
+      {pesan && <p style={{ fontSize: 12, color: "#C0392B" }} className="mt-2 text-center">{pesan}</p>}
+    </div>
   );
 }

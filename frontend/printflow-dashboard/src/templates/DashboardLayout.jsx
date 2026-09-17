@@ -1,11 +1,7 @@
-import { warna, gradien } from "../styles/theme";
 import Sidebar from "../organisms/Sidebar";
 import Topbar from "../organisms/Topbar";
 import Toast from "../atoms/Toast";
 
-// Template Atomic Design: kerangka tata letak dashboard (sidebar + topbar +
-// area konten), tanpa data spesifik halaman -- tiap halaman (pages/) tinggal
-// mengisi children-nya sendiri lewat App.jsx.
 export default function DashboardLayout({
   halaman,
   setHalaman,
@@ -19,14 +15,15 @@ export default function DashboardLayout({
   children,
 }) {
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif", color: warna.teksUtama, background: gradien.latar }} className="min-h-screen flex">
+    <div className="min-h-screen flex bg-[#F8FAFC] text-slate-900">
       <Toast pesan={toastPesan} />
       <Sidebar halaman={halaman} setHalaman={setHalaman} totalProses={totalProses} />
 
-      <main className="flex-1 p-6">
+      <main className="flex-1 px-8 py-7 max-w-[1600px] overflow-y-auto">
         <Topbar title={title} sub={sub} notifications={notifications} email={email} onLogout={onLogout} />
         {children}
       </main>
     </div>
   );
 }
+

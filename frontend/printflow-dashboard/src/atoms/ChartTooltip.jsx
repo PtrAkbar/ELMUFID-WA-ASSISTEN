@@ -1,11 +1,10 @@
-import { warna, bayangan } from "../styles/theme";
-
 export default function ChartTooltip({ active, payload, label }) {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div style={{ background: warna.kartu, border: `1px solid ${warna.garis}`, borderRadius: 10, padding: "8px 12px", boxShadow: bayangan.dropdown }}>
-      <p style={{ fontSize: 12, color: warna.teksSekunder, margin: 0 }}>{label}</p>
-      <p style={{ fontSize: 14, fontWeight: 700, color: warna.teksUtama, margin: 0 }}>{payload[0].value} order</p>
+    <div className="bg-white rounded-2xl px-4 py-2.5 shadow-xl shadow-slate-900/10 border border-slate-100 text-left pointer-events-none">
+      <p className="text-xs text-slate-500 font-medium">{label}</p>
+      <p className="text-sm font-bold text-slate-900 mt-0.5">{payload[0].value} order</p>
     </div>
   );
 }
+
