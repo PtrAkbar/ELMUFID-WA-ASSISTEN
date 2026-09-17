@@ -3,7 +3,7 @@ require('dotenv').config();
 // Kumpulan konfigurasi yang diambil dari .env, dipakai di seluruh aplikasi
 const env = {
   groqApiKey: process.env.GROQ_API_KEY,
-  groqModel: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+  groqModel: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
   storeName: process.env.STORE_NAME || 'Percetakan',
   adminNumber: process.env.ADMIN_NUMBER || '',
   sessionFolder: process.env.SESSION_FOLDER || './session',

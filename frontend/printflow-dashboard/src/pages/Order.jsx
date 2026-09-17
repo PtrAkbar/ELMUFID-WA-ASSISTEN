@@ -61,7 +61,7 @@ export default function Order({ orders, onUbahStatus, onTambahOrder, onHapusSemu
       {orderTersaring.length === 0 ? (
         <EmptyState pesan={cariOrder ? "Order tidak ditemukan" : "Belum ada order aktif"} tinggi={220} />
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[180px]">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">

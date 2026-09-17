@@ -122,7 +122,7 @@ export default function Stock({
       ) : stockTersaring.length === 0 ? (
         <EmptyState pesan={cariStock ? "Barang tidak ditemukan" : "Belum ada barang di stock"} tinggi={200} />
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[180px]">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">
